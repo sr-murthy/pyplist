@@ -1,0 +1,8 @@
+include README.rst
+include LICENSE.rst
+include requirements.txt
+include setup.py
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
+recursive-include pyplist
+
