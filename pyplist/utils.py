@@ -1,7 +1,7 @@
 __all__ = [
     'json_normalized_plist',
     'plist_from_path',
-    'sha512_hash_iterable',
+    'blake2b_hash_iterable',
 ]
 
 
@@ -13,7 +13,6 @@ import typing
 
 from hashlib import (
     blake2b,
-    sha512,
 )
 from pathlib import Path
 from typing import (
@@ -27,13 +26,19 @@ import pandas as pd
 from pandas import json_normalize
 
 
-def sha512_hash_iterable(
+def blake2b_hash_iterable(
     iterable: Iterable[Union[bool, int, float, complex, str, bytes]]
 ) -> str:
     """
-    Calculates a SHA-512 hash of an iterable of Python primitive values,
-    which may be a mixture of booleans, integers, floats, complex numbers,
-    strings, or bytes.
+    Hashes an iterable of Python primitive values, using the Python
+    implementation of the BLAKE2b cryptographic hash function.
+
+    https://docs.python.org/3/library/hashlib.html#blake2
+    https://blake2.net/
+    https://tools.ietf.org/html/rfc7693.html
+
+    The primitive values can be a mixture of booleans, integers, floats,
+    complex numbers, strings, or bytes objects.
 
     Parameters
     ----------
@@ -41,7 +46,7 @@ def sha512_hash_iterable(
 
     Returns
     -------
-    The SHA-512 hash string (message digest) of the iterable
+    The BLAKE2b hash string (message digest) of the iterable
     """
     ser = iterable
 

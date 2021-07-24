@@ -24,7 +24,7 @@ import plist_utils
 from .utils import (
     json_normalized_plist,
     plist_from_path,
-    sha512_hash_iterable,
+    blake2b_hash_iterable,
 )
 
 
@@ -123,18 +123,18 @@ class Plist:
 
     def __hash__(self) -> int:
         """
-        Returns the integer hash of the SHA-512 hash of the plist data - this
-        is computed by taking the SHA-512 hash of the sorted Pandas series of
-        values, and then taking the hash of the SHA-512 hash value.
+        Returns the integer hash of the BLAKE2b hash of the plist data - this
+        is computed by taking the BLAKE2b hash of the sorted Pandas series of
+        values, and then taking the hash of the BLAKE2b hash value.
 
         Returns
         -------
 
-        The SHA-512 hash value of the plist values
+        The integer hash of the BLAKE2b hash value of the plist values
         """
         plist_series = pd.Series(self._data).sort_index().transform(str)
 
-        return hash(sha512_hash_iterable(plist_series))
+        return hash(blake2b_hash_iterable(plist_series))
 
     @property
     def hash(self):
