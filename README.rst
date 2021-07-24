@@ -1,4 +1,4 @@
-plist_utils
-===========
+pyplist
+=======
 
-A library and CLI tool for inspecting Mac plist files, and detecting plist files associated with malicious processes and apps.
+A library and CLI tool for inspecting and comparing Mac plist files, and detecting plist files associated with malicious processes and apps.
