@@ -4,8 +4,7 @@ __all__ = [
 
 
 import io
-import pathlib
-import types
+import plistlib
 
 from pathlib import Path
 
@@ -77,7 +76,6 @@ class Plist:
                 'a bytes object for a plist binary file, or a plist dict'
             )
 
-
     @property
     def name(self):
         return self._name
@@ -107,7 +105,6 @@ class Plist:
     @property
     def values(self) -> Tuple[Any]:
         return tuple(self._data.values())
-    
 
     @property
     def path(self) -> Union[None, Path]:
@@ -153,7 +150,7 @@ class Plist:
         Returns
         -------
         Whether the two plists are equal (in data)
-        """        
+        """
         this_plist_values = pd.Series(self._data).sort_index().transform(str)
         other_plist_values = pd.Series(other_plist._data).sort_index().transform(str)
 
