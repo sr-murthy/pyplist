@@ -5,10 +5,7 @@ __all__ = [
 ]
 
 
-import pathlib
 import plistlib
-import types
-import typing
 
 
 from hashlib import (
@@ -112,7 +109,7 @@ def plist_from_path(plist_path: Union[str, Path]) -> dict:
                         'Ubuntu) to check the correctness of the source file.'
                     )
         except FileNotFoundError as e:
-            raise
+            raise e
         except (ExpatError, InvalidFileException):
             try:
                 with open(plist_path, 'rb') as plist_file:
@@ -135,6 +132,7 @@ def plist_from_path(plist_path: Union[str, Path]) -> dict:
                 return plist
         else:
             return plist
+
 
 def json_normalized_plist(plist: Mapping) -> dict:
     """
