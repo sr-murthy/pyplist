@@ -15,11 +15,13 @@ from hashlib import (
     blake2b,
 )
 from pathlib import Path
+from plistlib import InvalidFileException
 from typing import (
     Iterable,
     Mapping,
     Union,
 )
+from xml.parsers.expat import ExpatError
 
 import pandas as pd
 
@@ -70,7 +72,8 @@ def blake2b_hash_iterable(
 
 def plist_from_path(plist_path: Union[str, Path]) -> dict:
     """
-    Returns a plist dict from a plist path string or ``pathlib.Path`` object.
+    Returns a plist dict from a binary or XML plist file path string, or
+    ``pathlib.Path`` object.
 
     Parameters
     ----------
@@ -82,19 +85,54 @@ def plist_from_path(plist_path: Union[str, Path]) -> dict:
 
     Raises
     ------
-    ValueError
-        If the file path is invalid or doesn't exist
+    InvalidFileException
+        If the file path is invalid, i.e. not a valid path string or
+        path object, or if the target file is corruped in some way
+    FileNotFoundError
+        If the file path does not exist
     """
     try:
         plist_path = Path(plist_path)
     except TypeError:
-        raise ValueError('Invalid file path')
+        raise InvalidFileException('Invalid file path')
     else:
         try:
             with open(plist_path, 'rb') as plist_file:
-               plist = plistlib.load(plist_file)
-        except FileNotFoundError:
-            raise ValueError('Nonexistent file')
+                plist = plistlib.load(plist_file, fmt=plistlib.FMT_BINARY)
+
+                # A corrupted or invalid binary plist file may not necessarily
+                # trigger an ``plistlib.InvalidFileException`` - here, ``plist``
+                # might just end up as a malformed bytes object, so in that case
+                # we need to manually trigger the ``InvalidFileException``
+                if not isinstance(plist, dict):
+                    raise InvalidFileException(
+                        'Not a valid plist file - the plist file you are trying '
+                        'to load is not a valid binary or XML plist file. '
+                        'Use plutil (MacOS, OS X, BSD) or plistutil (Debian, '
+                        'Ubuntu) to check the correctness of the source file.'
+                    )
+        except FileNotFoundError as e:
+            raise
+        except (ExpatError, InvalidFileException):
+            try:
+                with open(plist_path, 'rb') as plist_file:
+                    plist = plistlib.load(plist_file, fmt=plistlib.FMT_XML)
+
+                    # A corrupted or invalid XML plist file may not necessarily
+                    # trigger an ``plistlib.InvalidFileException`` - here, ``plist``
+                    # might just end up as a malformed XML string, so in that case
+                    # we need to manually trigger the ``InvalidFileException``
+                    if not isinstance(plist, dict):
+                        raise InvalidFileException
+            except (ExpatError, InvalidFileException):
+                raise InvalidFileException(
+                    'Not a valid plist file - the plist file you are trying '
+                    'to load is not a valid binary or XML plist file. '
+                    'Use plutil (MacOS, OS X, BSD) or plistutil (Debian, '
+                    'Ubuntu) to check the correctness of the source file.'
+                )
+            else:
+                return plist
         else:
             return plist
 
@@ -107,6 +145,9 @@ def json_normalized_plist(plist: Mapping) -> dict:
     ::
 
         {'x': {'y': {'z': 1}}} -> {'x.y.z': 1}
+
+    The plist must be one loaded from a valid plist file - a non-plist dict
+    or mapping may not produce the expected results.
 
     Parameters
     ----------

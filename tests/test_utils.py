@@ -1,9 +1,16 @@
+import plistlib
+
 from hashlib import blake2b
+from plistlib import InvalidFileException
+from xml.parsers.expat import ExpatError
 
 from pyplist.utils import (
     blake2b_hash_iterable,
+    json_normalized_plist,
+    plist_from_path,
 )
 
+from tempfile import NamedTemporaryFile
 from unittest import TestCase
 
 
@@ -144,3 +151,117 @@ class TestBlake2bHashIterable(TestCase):
         received_hash = blake2b_hash_iterable(iterable)
 
         self.assertEqual(received_hash, expected_hash)
+
+
+class PlistFromPath(TestCase):
+
+    def test__non_existent_plist_file_path__file_not_found_error_raised(self):
+        with self.assertRaises(FileNotFoundError):
+            plist_from_path('/non/existent/plist.plist')
+
+    def test__invalid_binary_plist_file_path__invalid_file_exception_raised(self):
+        binary_plist = (
+            """
+            <?xml version="1.0" encoding="UTF-8">?
+            <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+            <plist version="1.0">
+            <dict>
+                <key>a</key>
+                <strings>one</string>
+            </dict>
+            </plist>
+            """
+        )
+
+        with NamedTemporaryFile('wb') as binary_plist_file:
+            plistlib.dump(binary_plist.encode('utf8'), binary_plist_file, fmt=plistlib.FMT_BINARY)
+            binary_plist_file.flush()
+
+            with self.assertRaises(InvalidFileException):
+                plist_from_path(binary_plist_file.name)
+
+    def test__invalid_xml_plist_file_path__invalid_file_exception_raised(self):
+        xml_plist = (
+            """
+            <?xml version="1.0" encoding="UTF-8">?
+            <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+            <plist version="1.0">
+            <dict>
+                <key>a</key>
+                <strings>one</string>
+            </dict>
+            </plist>
+            """
+        )
+
+        with NamedTemporaryFile('wb') as xml_plist_file:
+            plistlib.dump(xml_plist, xml_plist_file, fmt=plistlib.FMT_XML)
+            xml_plist_file.flush()
+
+            with self.assertRaises(InvalidFileException):
+                plist_from_path(xml_plist_file.name)
+
+
+    def test__valid_xml_plist_file_path__plist_dict_returned(self):
+        expected = {
+            'a': 'one',
+            'b': 2,
+            'c': {
+                'd': {
+                    'e': False
+                }
+            }
+        }
+
+        xml_plist = """<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>a</key>
+    <string>one</string>
+    <key>b</key>
+    <integer>2</integer>
+    <key>c</key>
+    <dict>
+        <key>d</key>
+        <dict>
+            <key>e</key>
+            <false/>
+        </dict>
+    </dict>
+</dict>
+</plist>
+"""
+
+        with NamedTemporaryFile('wb') as xml_plist_file:
+            xml_plist_file.write(xml_plist.encode('utf8'))
+            xml_plist_file.flush()
+
+            received = plist_from_path(xml_plist_file.name)
+
+            self.assertEqual(received, expected)
+
+
+class JsonNormalizedPlist(TestCase):
+
+    def test__hierarchical_plist_dict__normalized_plist_dict_returned(self):
+
+        plist_dict = {
+            'a': 'one',
+            'b': 2,
+            'c': {
+                'd': {
+                    'e': False
+                }
+            }
+        }
+
+        expected = {
+            'a': 'one',
+            'b': 2,
+            'c.d.e': False
+        }
+
+        received = json_normalized_plist(plist_dict)
+
+        self.assertEqual(received, expected)
