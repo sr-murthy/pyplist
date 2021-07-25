@@ -2,17 +2,17 @@ __all__ = [
     'json_normalized_plist',
     'plist_from_path',
     'blake2b_hash_iterable',
+    'INVALID_PLIST_FILE_MSG',
 ]
 
 
 import plistlib
-
+import textwrap
 
 from hashlib import (
     blake2b,
 )
 from pathlib import Path
-from plistlib import InvalidFileException
 from typing import (
     Iterable,
     Mapping,
@@ -23,6 +23,15 @@ from xml.parsers.expat import ExpatError
 import pandas as pd
 
 from pandas import json_normalize
+
+
+INVALID_PLIST_FILE_MSG = textwrap.dedent(
+    """
+    Invalid plist file - the plist file you are trying to load is not a valid
+    binary or XML plist file. Use plutil (MacOS, OS X, BSD) or plistutil
+    (Debian, Ubuntu) to check the correctness of the source file.
+    """
+)
 
 
 def blake2b_hash_iterable(
@@ -82,7 +91,7 @@ def plist_from_path(plist_path: Union[str, Path]) -> dict:
 
     Raises
     ------
-    InvalidFileException
+    plistlib.InvalidFileException
         If the file path is invalid, i.e. not a valid path string or
         path object, or if the target file is corruped in some way
     FileNotFoundError
@@ -91,43 +100,33 @@ def plist_from_path(plist_path: Union[str, Path]) -> dict:
     try:
         plist_path = Path(plist_path)
     except TypeError:
-        raise InvalidFileException('Invalid file path')
+        raise plistlib.InvalidFileException(INVALID_PLIST_FILE_MSG)
     else:
         try:
             with open(plist_path, 'rb') as plist_file:
                 plist = plistlib.load(plist_file, fmt=plistlib.FMT_BINARY)
 
                 # A corrupted or invalid binary plist file may not necessarily
-                # trigger an ``plistlib.InvalidFileException`` - here, ``plist``
+                # trigger an ``plistlib.plistlib.InvalidFileException`` - here, ``plist``
                 # might just end up as a malformed bytes object, so in that case
-                # we need to manually trigger the ``InvalidFileException``
+                # we need to manually trigger the ``plistlib.InvalidFileException``
                 if not isinstance(plist, dict):
-                    raise InvalidFileException(
-                        'Not a valid plist file - the plist file you are trying '
-                        'to load is not a valid binary or XML plist file. '
-                        'Use plutil (MacOS, OS X, BSD) or plistutil (Debian, '
-                        'Ubuntu) to check the correctness of the source file.'
-                    )
+                    raise plistlib.InvalidFileException(INVALID_PLIST_FILE_MSG)
         except FileNotFoundError as e:
             raise e
-        except (ExpatError, InvalidFileException):
+        except (ExpatError, plistlib.InvalidFileException):
             try:
                 with open(plist_path, 'rb') as plist_file:
                     plist = plistlib.load(plist_file, fmt=plistlib.FMT_XML)
 
                     # A corrupted or invalid XML plist file may not necessarily
-                    # trigger an ``plistlib.InvalidFileException`` - here, ``plist``
+                    # trigger an ``plistlib.plistlib.InvalidFileException`` - here, ``plist``
                     # might just end up as a malformed XML string, so in that case
-                    # we need to manually trigger the ``InvalidFileException``
+                    # we need to manually trigger the ``plistlib.InvalidFileException``
                     if not isinstance(plist, dict):
-                        raise InvalidFileException
-            except (ExpatError, InvalidFileException):
-                raise InvalidFileException(
-                    'Not a valid plist file - the plist file you are trying '
-                    'to load is not a valid binary or XML plist file. '
-                    'Use plutil (MacOS, OS X, BSD) or plistutil (Debian, '
-                    'Ubuntu) to check the correctness of the source file.'
-                )
+                        raise plistlib.InvalidFileException
+            except (ExpatError, plistlib.InvalidFileException):
+                raise plistlib.InvalidFileException(INVALID_PLIST_FILE_MSG)
             else:
                 return plist
         else:
