@@ -6,7 +6,7 @@ orbs:
   # so you dont have to copy and paste it everywhere.
   # See the orb documentation here: https://circleci.com/developer/orbs/orb/circleci/python
   python: circleci/python@1.2
-  codecov: codecov/codecov@1.0.2
+  codecov: codecov/codecov@1.2.5
 
 workflows:
   sample:  # This is the name of the workflow, feel free to change it to better match your workflow.
@@ -50,5 +50,5 @@ jobs:
             coverage report
             coverage html
       - codecov/upload:
-          file: {{ htmlcov/index.html }}
+          file: htmlcov/index.html
 
