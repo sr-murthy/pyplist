@@ -4,8 +4,10 @@ __all__ = [
 
 
 import io
+import os
 import plistlib
 
+from datetime import datetime
 from pathlib import Path
 
 from types import MappingProxyType
@@ -116,6 +118,87 @@ class Plist:
         """
         return self._path
 
+    @property
+    def exists(self) -> bool:
+        """
+        Property - returns a bool of whether there is an underlying plist
+        file existing on the filesystem.
+
+        Returns
+        -------
+        ``bool`` of whether the underlying plist file exists
+        """
+        try:
+            return self.path.exists()
+        except (AttributeError, FileNotFoundError):
+            raise ValueError(f'Plist file "{str(self.path)}" does not exist or has been deleted')
+
+    @property
+    def created(self) -> str:
+        """
+        Property - returns the creation time string of the underlying plist
+        file, if it exists.
+
+        Returns
+        -------
+        The creation time string of the underlying plist file, if it exists.
+        """
+        try:
+            created_epoch_time = os.path.getctime(self.path)
+        except (TypeError, FileNotFoundError):
+            raise ValueError(f'Plist file "{str(self.path)}" does not exist or has been deleted')
+        else:
+            return datetime.utcfromtimestamp(created_epoch_time).strftime(
+                '%Y-%m-%d %H:%M:%S'
+            )
+
+    @property
+    def updated(self) -> str:
+        """
+        Property - returns the last updated time string of the underlying plist
+        file, if it exists.
+
+        Returns
+        -------
+        The last updated time string of the underlying plist file, if it exists.
+        """
+        try:
+            updated_epoch_time = os.path.getmtime(self.path)
+        except (TypeError, FileNotFoundError):
+            raise ValueError(f'Plist file "{str(self.path)}" does not exist or has been deleted')
+        else:
+            return datetime.utcfromtimestamp(updated_epoch_time).strftime(
+                '%Y-%m-%d %H:%M:%S'
+            )
+
+    @property
+    def owner(self) -> str:
+        """
+        Property - returns the user/owner name of the underlying plist file, if it exists.
+
+        Returns
+        -------
+        The user/owner name of the underlying plist file, if it exists.
+        """
+        try:
+            return self.path.owner()
+        except (AttributeError, FileNotFoundError):
+            raise ValueError(f'Plist file "{str(self.path)}" does not exist or has been deleted')
+
+    @property
+    def group(self) -> str:
+        """
+        Property - returns the user group name of the underlying plist file, if it exists.
+
+        Returns
+        -------
+        The user group name of the underlying plist file, if it exists.
+        """
+        try:
+            return self.path.group()
+        except (AttributeError, FileNotFoundError):
+            raise ValueError(f'Plist file "{str(self.path)}" does not exist or has been deleted')
+
     def __hash__(self) -> int:
         """
         Returns the integer hash of the BLAKE2b hash of the plist data - this
@@ -133,6 +216,14 @@ class Plist:
 
     @property
     def hash(self):
+        """
+        Property - returns an integer hash of the plist data; wrapper attribute for
+        ``self.__hash__()``.
+
+        Returns
+        -------
+        An integer hash of the plist data using ``self.__hash__()``
+        """
         return self.__hash__()
 
     def __eq__(self, other_plist) -> bool:
