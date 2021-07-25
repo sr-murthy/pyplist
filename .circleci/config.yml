@@ -6,6 +6,7 @@ orbs:
   # so you dont have to copy and paste it everywhere.
   # See the orb documentation here: https://circleci.com/developer/orbs/orb/circleci/python
   python: circleci/python@1.2
+  codecov: codecov/codecov@1.0.2
 
 workflows:
   sample:  # This is the name of the workflow, feel free to change it to better match your workflow.
@@ -36,13 +37,18 @@ jobs:
           # app-dir: ~/project/package-directory/  # If you're requirements.txt isn't in the root directory.
           pip-dependency-file: test-requirements.txt  # if you have a different name for your requirements file, maybe one that combines your runtime and test requirements.
       - run:
+          name: Lint source code (fllake8)
+          # This assumes flake8 is installed via the install-package step above
+          command: python -m flake8 pyplist
+      - run:
           name: Run tests and measure coverage
           # This assumes coverage and pytest is installed via the install-package step above
           command: coverage run --source=./pyplist -m pytest -v
       - run:
-          name: Generate coverage report
-          command: coverage report
-      - run:
-          name: flake8
-          # This assumes flake8 is installed via the install-package step above
-          command: python -m flake8 pyplist
+          name: Generate coverage report and artifacts
+          command: |
+            coverage report
+            coverage html
+      - codecov/upload:
+          file: {{ htmlcov/index.html }}
+
