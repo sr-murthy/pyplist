@@ -33,9 +33,10 @@ setup(
         'smurthy@tuta.io'
     ),
     description=(
-        'A library and CLI tool for inspecting and comparing Mac plist files, '
-        'and detecting plist files associated with malicious processes and '
-        'apps.'
+        'A library and CLI tool for finding, inspecting and comparing plists '
+        '(property list files), and detecting plists associated with '
+        'non-standard or malicious processes and apps, on Apple MacOS/OX X, '
+        'iOS and other relevant systems and devices.'
     ),
     long_description=long_description,
     long_description_content_type='text/x-rst',
