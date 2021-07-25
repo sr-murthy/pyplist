@@ -18,8 +18,6 @@ from typing import (
 
 import pandas as pd
 
-import plist_utils
-
 from .utils import (
     json_normalized_plist,
     plist_from_path,
@@ -137,14 +135,14 @@ class Plist:
     def hash(self):
         return self.__hash__()
 
-    def __eq__(self, other_plist: plist_utils.plist.Plist) -> bool:
+    def __eq__(self, other_plist) -> bool:
         """
         ``Plist`` object equality comparator - equality is based on equality of
         the Pandas series of values for the two plists.
 
         Parameters
         ----------
-        other_plist : ``plist_utils.plist.Plist``
+        other_plist : ``pyplist.plist.Plist``
             The other plist object
 
         Returns
