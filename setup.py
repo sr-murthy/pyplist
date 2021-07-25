@@ -4,7 +4,6 @@
 from pathlib import Path
 from setuptools import setup, find_packages
 
-
 import pyplist
 
 
@@ -39,7 +38,7 @@ setup(
         'apps.'
     ),
     long_description=long_description,
-    long_description_content_type='text/markdown',
+    long_description_content_type='text/x-rst',
     url='https://github.com/sr-murthy/pyplist',
     packages=find_packages(
         include=[
