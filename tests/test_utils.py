@@ -2,6 +2,7 @@ import plistlib
 import textwrap
 
 from hashlib import blake2b
+from pathlib import Path
 from plistlib import InvalidFileException
 from xml.parsers.expat import ExpatError
 
@@ -200,7 +201,7 @@ class PlistFromPath(TestCase):
                 plist_from_path(xml_plist_file.name)
 
 
-    def test__valid_xml_plist_file_path__plist_dict_returned(self):
+    def test__valid_xml_plist_file_path__correct_plist_dict_returned(self):
         expected = {
             'a': 'one',
             'b': 2,
@@ -238,6 +239,26 @@ class PlistFromPath(TestCase):
             received = plist_from_path(xml_plist_file.name)
 
             self.assertEqual(received, expected)
+
+    def test__valid_binary_plist_file_path__correct_plist_dict_returned(self):
+        expected = {
+            'a': 'one',
+            'b': 2,
+            'c': {
+                'd': {
+                    'e': False
+                }
+            }
+        }
+
+        # ``test_binary.plist`` is a static test binary plist file generated
+        # converted from a valid XML plist file, with the same content as in
+        # the test case above. So the ``Plist`` obtained from this file should
+        # have the same data as in the test case above
+        test_binary_plist_file = Path('tests/test_binary.plist')
+        received = plist_from_path(test_binary_plist_file)
+
+        self.assertEqual(received, expected)
 
 
 class JsonNormalizedPlist(TestCase):

@@ -103,7 +103,7 @@ def plist_from_path(plist_path: Union[str, Path]) -> dict:
         raise plistlib.InvalidFileException(INVALID_PLIST_FILE_MSG)
     else:
         try:
-            with open(plist_path, 'rb') as plist_file:
+            with open(plist_path.resolve(), 'rb') as plist_file:
                 plist = plistlib.load(plist_file, fmt=plistlib.FMT_BINARY)
 
                 # A corrupted or invalid binary plist file may not necessarily
