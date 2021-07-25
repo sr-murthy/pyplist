@@ -1,4 +1,5 @@
 import plistlib
+import textwrap
 
 from hashlib import blake2b
 from plistlib import InvalidFileException
@@ -181,18 +182,15 @@ class PlistFromPath(TestCase):
                 plist_from_path(binary_plist_file.name)
 
     def test__invalid_xml_plist_file_path__invalid_file_exception_raised(self):
-        xml_plist = (
-            """
-            <?xml version="1.0" encoding="UTF-8">?
-            <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-            <plist version="1.0">
-            <dict>
-                <key>a</key>
-                <strings>one</string>
-            </dict>
-            </plist>
-            """
-        )
+        xml_plist = textwrap.dedent("""<?xml version="1.0" encoding="UTF-8">?
+                                    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+                                    <plist version="1.0">
+                                    <dict>
+                                        <key>a</key>
+                                        <strings>one</string>
+                                    </dict>
+                                    </plist>
+                                    """)
 
         with NamedTemporaryFile('wb') as xml_plist_file:
             plistlib.dump(xml_plist, xml_plist_file, fmt=plistlib.FMT_XML)
@@ -213,25 +211,25 @@ class PlistFromPath(TestCase):
             }
         }
 
-        xml_plist = """<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>a</key>
-    <string>one</string>
-    <key>b</key>
-    <integer>2</integer>
-    <key>c</key>
-    <dict>
-        <key>d</key>
-        <dict>
-            <key>e</key>
-            <false/>
-        </dict>
-    </dict>
-</dict>
-</plist>
-"""
+        xml_plist = textwrap.dedent("""<?xml version="1.0" encoding="UTF-8"?>
+                    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+                    <plist version="1.0">
+                    <dict>
+                        <key>a</key>
+                        <string>one</string>
+                        <key>b</key>
+                        <integer>2</integer>
+                        <key>c</key>
+                        <dict>
+                            <key>d</key>
+                            <dict>
+                                <key>e</key>
+                                <false/>
+                            </dict>
+                        </dict>
+                    </dict>
+                    </plist>
+                    """)
 
         with NamedTemporaryFile('wb') as xml_plist_file:
             xml_plist_file.write(xml_plist.encode('utf8'))

@@ -43,19 +43,13 @@ class Plist:
         Class initialiser - accepts either a plist file path string or a
         ``pathlib.Path`` object.
         """
-        self._path = None
-        self._name = name
-
         try:
             plist_from_path(plist_input)
         except (TypeError, FileNotFoundError, plistlib.InvalidFileException):
             raise plistlib.InvalidFileException(INVALID_PLIST_FILE_MSG)
         else:
             self._path = Path(plist_input)
-
-    @property
-    def name(self):
-        return self._name
+            self._name = name
 
     @property
     def path(self) -> Union[None, Path]:
@@ -68,6 +62,10 @@ class Plist:
         ``Pathlib.Path`` object containing the file path.
         """
         return self._path
+
+    @property
+    def name(self):
+        return self._name
 
     @property
     def data(self) -> MappingProxyType:
@@ -86,7 +84,7 @@ class Plist:
         """
         try:
             plist_dict = plist_from_path(self.path)
-        except plistlib.InvalidFileException as e:
+        except (plistlib.InvalidFileException, FileNotFoundError) as e:
             raise e
         else:
             return MappingProxyType(
@@ -164,12 +162,7 @@ class Plist:
         -------
         ``bool`` of whether the underlying plist file exists
         """
-        try:
-            return self.path.exists()
-        except (AttributeError, FileNotFoundError):
-            raise ValueError(
-                f'Plist file "{str(self.path)}" does not exist or has been deleted'
-            )
+        return self.path.exists()
 
     @property
     def created(self) -> str:
@@ -181,16 +174,11 @@ class Plist:
         -------
         The creation time string of the underlying plist file, if it exists.
         """
-        try:
-            created_epoch_time = os.path.getctime(self.path)
-        except (TypeError, FileNotFoundError):
-            raise ValueError(
-                f'Plist file "{str(self.path)}" does not exist or has been deleted'
-            )
-        else:
-            return datetime.utcfromtimestamp(created_epoch_time).strftime(
-                '%Y-%m-%d %H:%M:%S'
-            )
+        created_epoch_time = os.path.getctime(self.path)
+
+        return datetime.utcfromtimestamp(created_epoch_time).strftime(
+            '%Y-%m-%d %H:%M:%S'
+        )
 
     @property
     def updated(self) -> str:
@@ -202,16 +190,11 @@ class Plist:
         -------
         The last updated time string of the underlying plist file, if it exists.
         """
-        try:
-            updated_epoch_time = os.path.getmtime(self.path)
-        except (TypeError, FileNotFoundError):
-            raise ValueError(
-                f'Plist file "{str(self.path)}" does not exist or has been deleted'
-            )
-        else:
-            return datetime.utcfromtimestamp(updated_epoch_time).strftime(
-                '%Y-%m-%d %H:%M:%S'
-            )
+        updated_epoch_time = os.path.getmtime(self.path)
+
+        return datetime.utcfromtimestamp(updated_epoch_time).strftime(
+            '%Y-%m-%d %H:%M:%S'
+        )
 
     @property
     def accessed(self) -> str:
@@ -223,16 +206,11 @@ class Plist:
         -------
         The last access time string of the underlying plist file, if it exists.
         """
-        try:
-            accessed_epoch_time = os.path.getatime(self.path)
-        except (TypeError, FileNotFoundError):
-            raise ValueError(
-                f'Plist file "{str(self.path)}" does not exist or has been deleted'
-            )
-        else:
-            return datetime.utcfromtimestamp(accessed_epoch_time).strftime(
-                '%Y-%m-%d %H:%M:%S'
-            )
+        accessed_epoch_time = os.path.getatime(self.path)
+
+        return datetime.utcfromtimestamp(accessed_epoch_time).strftime(
+            '%Y-%m-%d %H:%M:%S'
+        )
 
     @property
     def owner(self) -> str:
@@ -243,12 +221,7 @@ class Plist:
         -------
         The user/owner name of the underlying plist file, if it exists.
         """
-        try:
-            return self.path.owner()
-        except (AttributeError, FileNotFoundError):
-            raise ValueError(
-                f'Plist file "{str(self.path)}" does not exist or has been deleted'
-            )
+        return self.path.owner()
 
     @property
     def group(self) -> str:
@@ -259,9 +232,4 @@ class Plist:
         -------
         The user group name of the underlying plist file, if it exists.
         """
-        try:
-            return self.path.group()
-        except (AttributeError, FileNotFoundError):
-            raise ValueError(
-                f'Plist file "{str(self.path)}" does not exist or has been deleted'
-            )
+        return self.path.group()
