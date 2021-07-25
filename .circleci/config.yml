@@ -39,3 +39,7 @@ jobs:
           name: Run tests
           # This assumes pytest is installed via the install-package step above
           command: pytest -v
+      - run:
+          name: flake8
+          # This assumes flake8 is installed via the install-package step above
+          command: python -m flake8 pyplist
