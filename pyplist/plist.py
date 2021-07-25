@@ -84,7 +84,7 @@ class Plist:
         """
         try:
             plist_dict = plist_from_path(self.path)
-        except (plistlib.InvalidFileException, FileNotFoundError) as e:
+        except (FileNotFoundError, plistlib.InvalidFileException) as e:
             raise e
         else:
             return MappingProxyType(
@@ -150,6 +150,13 @@ class Plist:
 
     @property
     def values(self) -> Tuple[Any]:
+        """
+        Property - returns a tuple of the plist values.
+
+        Returns
+        -------
+        Tuple of plist values
+        """
         return tuple(self.data.values())
 
     @property
