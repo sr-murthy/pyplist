@@ -51,5 +51,5 @@ jobs:
             coverage html
       - codecov/upload:
           file: htmlcov/index.html
-          token: $CODECOV_TOKEN
+          token: CODECOV_TOKEN
 
