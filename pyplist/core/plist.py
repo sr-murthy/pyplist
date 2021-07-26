@@ -83,7 +83,7 @@ class Plist:
         ``plistlib.InvalidFileException``
         """
         try:
-            plist_dict = plist_from_path(self.file_path)
+            plist_dict, _ = plist_from_path(self.file_path)
         except (FileNotFoundError, plistlib.InvalidFileException) as e:
             raise e
         else:
@@ -173,6 +173,19 @@ class Plist:
         return self.file_path.exists()
 
     @property
+    def file_type(self) -> str:
+        """
+        Property - returns the plist file type: ``'xml'`` or ``'binary'``.
+
+        Returns
+        -------
+        ``str`` of whether the plist file type: ``'xml'`` or ``'binary'``
+        """
+        _, file_type = plist_from_path(self.file_path)
+
+        return file_type
+
+    @property
     def file_mode(self) -> str:
         """
         Property - returns the underlying plist file mode string.
@@ -203,14 +216,14 @@ class Plist:
         return os.path.getsize(self.file_path)
 
     @property
-    def file_created(self) -> str:
+    def file_created(self) -> datetime:
         """
-        Property - returns the creation time string of the underlying plist
-        file, if it exists.
+        Property - returns a ``datetime.datetime`` object of the file creation
+        time. If it does not exist a ``FileNotFoundError`` is raised.
 
         Returns
         -------
-        The creation time string of the underlying plist file, if it exists.
+        ``datetime.datetime`` object of the file creation time, if if exists.
 
         Raises
         ------
@@ -218,20 +231,19 @@ class Plist:
         """
         created_epoch_time = os.path.getctime(self.file_path)
 
-        return datetime.utcfromtimestamp(created_epoch_time).strftime(
-            '%Y-%m-%d %H:%M:%S'
-        )
+        return datetime.utcfromtimestamp(created_epoch_time)
 
     @property
-    def file_updated(self) -> str:
+    def file_updated(self) -> datetime:
         """
-        Property - returns the last updated time string of the underlying plist
-        file, if it exists.
+        Property - returns a ``datetime.datetime`` object of the time
+        the file was updated. If it does exist a ``FileNotFoundError`` is
+        raised.
 
         Returns
         -------
-        The last updated time string of the underlying plist file, if it
-        exists.
+        ``datetime.datetime`` object of the time the file was last updated, if
+        it exists
 
         Raises
         ------
@@ -239,19 +251,19 @@ class Plist:
         """
         updated_epoch_time = os.path.getmtime(self.file_path)
 
-        return datetime.utcfromtimestamp(updated_epoch_time).strftime(
-            '%Y-%m-%d %H:%M:%S'
-        )
+        return datetime.utcfromtimestamp(updated_epoch_time)
 
     @property
-    def file_accessed(self) -> str:
+    def file_accessed(self) -> datetime:
         """
-        Property - returns the last access time string of the underlying plist
-        file, if it exists.
+        Property - returns a ``datetime.datetime`` object of the time
+        the file was accessed. If it does exist a ``FileNotFoundError`` is
+        raised.
 
         Returns
         -------
-        The last access time string of the underlying plist file, if it exists.
+        ``datetime.datetime`` object of the time the file was last accessed, if
+        it exists
 
         Raises
         ------
@@ -259,9 +271,7 @@ class Plist:
         """
         accessed_epoch_time = os.path.getatime(self.file_path)
 
-        return datetime.utcfromtimestamp(accessed_epoch_time).strftime(
-            '%Y-%m-%d %H:%M:%S'
-        )
+        return datetime.utcfromtimestamp(accessed_epoch_time)
 
     @property
     def file_owner(self) -> str:
@@ -318,11 +328,12 @@ class Plist:
             'name': self.file_path.name,
             'dir': str(self.file_path.parent.absolute()),
             'exists': self.file_exists,
+            'type': self.file_type,
             'user': self.file_owner,
             'group': self.file_group,
             'size': self.file_size,
             'mode': self.file_mode,
-            'created': self.file_created,
-            'updated': self.file_updated,
-            'accessed': self.file_accessed
+            'created': self.file_created.strftime('%Y-%m-%d %H:%M:%S.%f'),
+            'updated': self.file_updated.strftime('%Y-%m-%d %H:%M:%S.%f'),
+            'accessed': self.file_accessed.strftime('%Y-%m-%d %H:%M:%S.%f')
         }])

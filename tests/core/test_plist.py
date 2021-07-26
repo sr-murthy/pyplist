@@ -143,6 +143,9 @@ class TestPlist(TestCase):
             # Check plist exists
             self.assertTrue(received_plist.file_exists)
 
+            # Check plist file type - the test plist here is XML
+            self.assertEqual(received_plist.file_type, 'xml')
+
             # Check plist file mode
             expected_file_mode = stat.filemode(os.stat(plist_file_path).st_mode)
             self.assertEqual(received_plist.file_mode, expected_file_mode)
@@ -153,17 +156,17 @@ class TestPlist(TestCase):
 
             # Check plist creation time
             expected_file_created = datetime.utcfromtimestamp(
-                os.path.getctime(plist_file_path)).strftime('%Y-%m-%d %H:%M:%S')
+                os.path.getctime(plist_file_path))
             self.assertEqual(received_plist.file_created, expected_file_created)
 
             # Check plist updated time
             expected_file_updated = datetime.utcfromtimestamp(
-                os.path.getmtime(plist_file_path)).strftime('%Y-%m-%d %H:%M:%S')
+                os.path.getmtime(plist_file_path))
             self.assertEqual(received_plist.file_updated, expected_file_updated)
 
             # Check plist accessed time
             expected_file_accessed = datetime.utcfromtimestamp(
-                os.path.getatime(plist_file_path)).strftime('%Y-%m-%d %H:%M:%S')
+                os.path.getatime(plist_file_path))
             self.assertEqual(received_plist.file_accessed, expected_file_accessed)
 
             # Check plist file owner login name
@@ -179,13 +182,14 @@ class TestPlist(TestCase):
                 'name': plist_file_path.name,
                 'dir': os.path.dirname(plist_file_path),
                 'exists': True,
+                'type': 'xml',
                 'user': expected_file_owner,
                 'group': expected_file_group,
                 'size': expected_file_size,
                 'mode': expected_file_mode,
-                'created': expected_file_created,
-                'updated': expected_file_updated,
-                'accessed': expected_file_accessed
+                'created': expected_file_created.strftime('%Y-%m-%d %H:%M:%S.%f'),
+                'updated': expected_file_updated.strftime('%Y-%m-%d %H:%M:%S.%f'),
+                'accessed': expected_file_accessed.strftime('%Y-%m-%d %H:%M:%S.%f')
             }])
             assert_frame_equal(received_plist.file_summary, expected_file_summary)
 

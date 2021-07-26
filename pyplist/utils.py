@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import (
     Iterable,
     Mapping,
+    Tuple,
     Union,
 )
 from xml.parsers.expat import ExpatError
@@ -76,10 +77,10 @@ def blake2b_hash_iterable(
     return hasher.hexdigest()
 
 
-def plist_from_path(plist_path: Union[str, Path]) -> dict:
+def plist_from_path(plist_path: Union[str, Path]) -> Tuple[dict, str]:
     """
-    Returns a plist dict from a binary or XML plist file path string, or
-    ``pathlib.Path`` object.
+    Returns a plist dict and the underlying file type (``'xml'`` or
+    ``'binary'``) from a plist file path string, or ``pathlib.Path`` object.
 
     Parameters
     ----------
@@ -87,7 +88,7 @@ def plist_from_path(plist_path: Union[str, Path]) -> dict:
 
     Returns
     -------
-    A plist dict.
+    A plist dict and the underlying file type (``'xml'`` or ``'binary'``)
 
     Raises
     ------
@@ -130,9 +131,9 @@ def plist_from_path(plist_path: Union[str, Path]) -> dict:
             except (ExpatError, plistlib.InvalidFileException):
                 raise plistlib.InvalidFileException(INVALID_PLIST_FILE_MSG)
             else:
-                return plist
+                return plist, 'xml'
         else:
-            return plist
+            return plist, 'binary'
 
 
 def json_normalized_plist(plist: Mapping) -> dict:

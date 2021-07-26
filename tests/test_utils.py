@@ -155,7 +155,7 @@ class TestBlake2bHashIterable(TestCase):
         self.assertEqual(received_hash, expected_hash)
 
 
-class PlistFromPath(TestCase):
+class TestPlistFromPath(TestCase):
 
     def test__non_existent_plist_file_path__file_not_found_error_raised(self):
         with self.assertRaises(FileNotFoundError):
@@ -201,8 +201,8 @@ class PlistFromPath(TestCase):
                 plist_from_path(xml_plist_file.name)
 
 
-    def test__valid_xml_plist_file_path__correct_plist_dict_returned(self):
-        expected = {
+    def test__valid_xml_plist_file_path__correct_plist_dict_and_xml_type_returned(self):
+        expected_plist_dict = {
             'a': 'one',
             'b': 2,
             'c': {
@@ -236,12 +236,13 @@ class PlistFromPath(TestCase):
             xml_plist_file.write(xml_plist.encode('utf8'))
             xml_plist_file.flush()
 
-            received = plist_from_path(xml_plist_file.name)
+            received_plist_dict, received_plist_type = plist_from_path(xml_plist_file.name)
 
-            self.assertEqual(received, expected)
+            self.assertEqual(received_plist_dict, expected_plist_dict)
+            self.assertEqual(received_plist_type, 'xml')
 
-    def test__valid_binary_plist_file_path__correct_plist_dict_returned(self):
-        expected = {
+    def test__valid_binary_plist_file_path__correct_plist_dict_and_binary_type_returned(self):
+        expected_plist_dict = {
             'a': 'one',
             'b': 2,
             'c': {
@@ -256,12 +257,13 @@ class PlistFromPath(TestCase):
         # the test case above. So the ``Plist`` obtained from this file should
         # have the same data as in the test case above
         test_binary_plist_file = Path('tests/test_binary.plist')
-        received = plist_from_path(test_binary_plist_file)
+        received_plist_dict, received_plist_type = plist_from_path(test_binary_plist_file)
 
-        self.assertEqual(received, expected)
+        self.assertEqual(received_plist_dict, expected_plist_dict)
+        self.assertEqual(received_plist_type, 'binary')
 
 
-class JsonNormalizedPlist(TestCase):
+class TestJsonNormalizedPlist(TestCase):
 
     def test__hierarchical_plist_dict__normalized_plist_dict_returned(self):
 
