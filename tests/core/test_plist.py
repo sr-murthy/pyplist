@@ -72,7 +72,7 @@ class TestPlist(TestCase):
             test_name = 'test__init__valid_plist_file__path_and_name_stored'
             received_plist = Plist(plist_file.name, name=test_name)
 
-            self.assertEqual(received_plist.file_path, Path(plist_file.name))
+            self.assertEqual(received_plist.file_path, Path(plist_file.name).absolute())
             self.assertEqual(received_plist.name, test_name)
 
     def test__init__valid_plist_file__no_post_creation_modification__all_properties_correctly_set(self):
@@ -110,7 +110,7 @@ class TestPlist(TestCase):
             received_plist = Plist(plist_file.name, name=test_name)
 
             # Check plist path
-            plist_file_path = Path(plist_file.name)
+            plist_file_path = Path(plist_file.name).absolute()
             self.assertEqual(received_plist.file_path, plist_file_path)
 
             # Check plist name
@@ -192,6 +192,48 @@ class TestPlist(TestCase):
                 'accessed': expected_file_accessed.strftime('%Y-%m-%d %H:%M:%S.%f')
             }])
             assert_frame_equal(received_plist.file_summary, expected_file_summary)
+
+    def test__repr__no_name_set__correct_repr_returned(self):
+        plist = """<?xml version="1.0" encoding="UTF-8"?>
+                <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+                <plist version="1.0">
+                <dict>
+                    <key>a</key>
+                    <string>one</string>
+                </dict>
+                </plist>
+                """
+
+        with NamedTemporaryFile('wb') as plist_file:
+            plist_file.write(textwrap.dedent(plist).encode('utf8'))
+            plist_file.flush()
+
+            received_plist = Plist(plist_file.name)
+
+            expected_plist_repr = f'pyplist.core.plist.Plist("{plist_file.name}", name=None)'
+
+            self.assertEqual(received_plist.__repr__(), expected_plist_repr)
+
+    def test__repr__name_set__correct_repr_returned(self):
+        plist = """<?xml version="1.0" encoding="UTF-8"?>
+                <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+                <plist version="1.0">
+                <dict>
+                    <key>a</key>
+                    <string>one</string>
+                </dict>
+                </plist>
+                """
+
+        with NamedTemporaryFile('wb') as plist_file:
+            plist_file.write(textwrap.dedent(plist).encode('utf8'))
+            plist_file.flush()
+
+            received_plist = Plist(plist_file.name, name='test_repr')
+
+            expected_plist_repr = f'pyplist.core.plist.Plist("{plist_file.name}", name="test_repr")'
+
+            self.assertEqual(received_plist.__repr__(), expected_plist_repr)
 
     def test__data_property__valid_plist_file_deleted_after_creation__data_prop_call_triggers_file_not_found_error(self):
         plist = """<?xml version="1.0" encoding="UTF-8"?>

@@ -48,7 +48,7 @@ class Plist:
         except (TypeError, FileNotFoundError, plistlib.InvalidFileException):
             raise plistlib.InvalidFileException(INVALID_PLIST_FILE_MSG)
         else:
-            self._fp = Path(plist_input)
+            self._fp = Path(plist_input).absolute()
             self._name = name
 
     @property
@@ -80,7 +80,7 @@ class Plist:
 
         Raises
         ------
-        ``plistlib.InvalidFileException``
+        ``FileNotFoundError``, ``plistlib.InvalidFileException``
         """
         try:
             plist_dict, _ = plist_from_path(self.file_path)
@@ -90,6 +90,22 @@ class Plist:
             return MappingProxyType(
                 json_normalized_plist(plist_dict)
             )
+
+    def __repr__(self) -> str:
+        """
+        ``__repr__`` implementation - the string produced should, if executed,
+        in Python, reproduce a ``Plist`` object which has the same data as this
+        object (``self``), if the file still exists, and additionally the same
+        or similar file attributes, depending on any intermediate changes to
+        the file.
+        """
+        name_value = f'"{self.name}"' if self.name else "None"
+
+        return (
+            f'{self.__module__}.{self.__class__.__name__}('
+            f'"{self.file_path}", name={name_value}'
+            f')'
+        )
 
     def __hash__(self) -> int:
         """
