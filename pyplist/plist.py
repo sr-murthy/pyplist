@@ -294,3 +294,35 @@ class Plist:
         ``FileNotFoundError` if the file no longer exists
         """
         return self.file_path.group()
+
+    @property
+    def file_summary(self) -> pd.DataFrame:
+        """
+        Property - returns a Pandas dataframe summarising the key file
+        properties: name, directory, whether the file exists, the user/owner,
+        the user group, size in bytes, mode string, created time, last updated
+        time, last accessed time.
+
+        Returns
+        -------
+        Returns a Pandas dataframe summarising the key file properties: name,
+        directory, whether the file exists, the user/owner, the user group,
+        size in bytes, mode string, created time, last updated time, last
+        accessed time.
+
+        Raises
+        ------
+        ``FileNotFoundError` if the file no longer exists
+        """
+        return pd.DataFrame([{
+            'name': self.file_path.name,
+            'dir': str(self.file_path.parent.absolute()),
+            'exists': self.file_exists,
+            'user': self.file_owner,
+            'group': self.file_group,
+            'size': self.file_size,
+            'mode': self.file_mode,
+            'created': self.file_created,
+            'updated': self.file_updated,
+            'accessed': self.file_accessed
+        }])

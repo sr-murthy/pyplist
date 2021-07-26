@@ -13,6 +13,8 @@ from unittest import TestCase
 
 import pandas as pd
 
+from pandas.util.testing import assert_frame_equal
+
 
 class TestPlist(TestCase):
 
@@ -107,7 +109,8 @@ class TestPlist(TestCase):
             received_plist = Plist(plist_file.name, name=test_name)
 
             # Check plist path
-            self.assertEqual(received_plist.file_path, Path(plist_file.name))
+            plist_file_path = Path(plist_file.name)
+            self.assertEqual(received_plist.file_path, plist_file_path)
 
             # Check plist name
             self.assertEqual(received_plist.name, test_name)
@@ -140,33 +143,50 @@ class TestPlist(TestCase):
             self.assertTrue(received_plist.file_exists)
 
             # Check plist file mode
-            expected_file_mode = stat.filemode(os.stat(Path(plist_file.name)).st_mode)
+            expected_file_mode = stat.filemode(os.stat(plist_file_path).st_mode)
             self.assertEqual(received_plist.file_mode, expected_file_mode)
 
             # Check plist file size
-            expected_file_size = os.path.getsize(Path(plist_file.name))
+            expected_file_size = os.path.getsize(plist_file_path)
             self.assertEqual(received_plist.file_size, expected_file_size)
 
             # Check plist creation time
-            expected_created = datetime.utcfromtimestamp(
-                os.path.getctime(Path(plist_file.name))).strftime('%Y-%m-%d %H:%M:%S')
-            self.assertEqual(received_plist.file_created, expected_created)
+            expected_file_created = datetime.utcfromtimestamp(
+                os.path.getctime(plist_file_path)).strftime('%Y-%m-%d %H:%M:%S')
+            self.assertEqual(received_plist.file_created, expected_file_created)
 
             # Check plist updated time
-            expected_updated = datetime.utcfromtimestamp(
-                os.path.getmtime(Path(plist_file.name))).strftime('%Y-%m-%d %H:%M:%S')
-            self.assertEqual(received_plist.file_updated, expected_updated)
+            expected_file_updated = datetime.utcfromtimestamp(
+                os.path.getmtime(plist_file_path)).strftime('%Y-%m-%d %H:%M:%S')
+            self.assertEqual(received_plist.file_updated, expected_file_updated)
 
             # Check plist accessed time
-            expected_accessed = datetime.utcfromtimestamp(
-                os.path.getatime(Path(plist_file.name))).strftime('%Y-%m-%d %H:%M:%S')
-            self.assertEqual(received_plist.file_accessed, expected_accessed)
+            expected_file_accessed = datetime.utcfromtimestamp(
+                os.path.getatime(plist_file_path)).strftime('%Y-%m-%d %H:%M:%S')
+            self.assertEqual(received_plist.file_accessed, expected_file_accessed)
 
             # Check plist file owner login name
-            self.assertEqual(received_plist.file_owner, Path(plist_file.name).owner())
+            expected_file_owner = plist_file_path.owner()
+            self.assertEqual(received_plist.file_owner, expected_file_owner)
 
             # Check plist file group name
-            self.assertEqual(received_plist.file_group, Path(plist_file.name).group())
+            expected_file_group = plist_file_path.group()
+            self.assertEqual(received_plist.file_group, expected_file_group)
+
+            # Check plist file summary dataframe
+            expected_file_summary = pd.DataFrame([{
+                'name': plist_file_path.name,
+                'dir': os.path.dirname(plist_file_path),
+                'exists': True,
+                'user': expected_file_owner,
+                'group': expected_file_group,
+                'size': expected_file_size,
+                'mode': expected_file_mode,
+                'created': expected_file_created,
+                'updated': expected_file_updated,
+                'accessed': expected_file_accessed
+            }])
+            assert_frame_equal(received_plist.file_summary, expected_file_summary)
 
     def test__data_property__valid_plist_file_deleted_after_creation__data_prop_call_triggers_file_not_found_error(self):
         plist = """<?xml version="1.0" encoding="UTF-8"?>
