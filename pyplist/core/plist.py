@@ -171,6 +171,9 @@ class Plist:
     def values(self) -> Tuple[Union[bool, int, float, str, bytes, list]]:
         """
         Property - returns a tuple of the JSON-normalized plist values.
+        The allowable Python types are ``bool``, ``int``, ``float``, ``str``,
+        ``bytes``, and ``list``, and thse correspond to the allowable
+        types in the plist source XML data.
 
         Returns
         -------
@@ -181,7 +184,8 @@ class Plist:
     @property
     def file_exists(self) -> bool:
         """
-        Property - returns a bool of whether there the plist file exists.
+        Property - returns a bool of whether the plist file path currently
+        exists.
 
         Returns
         -------
