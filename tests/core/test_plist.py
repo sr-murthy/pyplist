@@ -6,7 +6,6 @@ import textwrap
 from datetime import datetime
 from hashlib import blake2b
 from pathlib import Path
-from pyplist.plist import Plist
 from tempfile import NamedTemporaryFile
 from types import MappingProxyType
 from unittest import TestCase
@@ -14,6 +13,8 @@ from unittest import TestCase
 import pandas as pd
 
 from pandas.util.testing import assert_frame_equal
+
+from pyplist.core.plist import Plist
 
 
 class TestPlist(TestCase):

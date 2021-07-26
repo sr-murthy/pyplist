@@ -18,7 +18,7 @@ from typing import (
 
 import pandas as pd
 
-from .utils import (
+from ..utils import (
     blake2b_hash_iterable,
     INVALID_PLIST_FILE_MSG,
     json_normalized_plist,
