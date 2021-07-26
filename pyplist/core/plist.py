@@ -137,11 +137,12 @@ class Plist:
     def __eq__(self, other_plist) -> bool:
         """
         ``Plist`` object equality comparator - equality is based on equality of
-        the Pandas series of values for the two plists.
+        the Pandas series of values for the two plists. The file attributes are
+        ignored.
 
         Parameters
         ----------
-        other_plist : ``pyplist.plist.Plist``
+        other_plist : ``pyplist.core.plist.Plist``
             The other plist object
 
         Returns
@@ -235,11 +236,12 @@ class Plist:
     def file_created(self) -> datetime:
         """
         Property - returns a ``datetime.datetime`` object of the file creation
-        time. If it does not exist a ``FileNotFoundError`` is raised.
+        UTC time. If it does not exist a ``FileNotFoundError`` is raised.
 
         Returns
         -------
-        ``datetime.datetime`` object of the file creation time, if if exists.
+        ``datetime.datetime`` object of the file creation UTC time, if if
+        exists.
 
         Raises
         ------
@@ -252,13 +254,14 @@ class Plist:
     @property
     def file_updated(self) -> datetime:
         """
-        Property - returns a ``datetime.datetime`` object of the time
+        Property - returns a ``datetime.datetime`` object of the UTC time
         the file was updated. If it does exist a ``FileNotFoundError`` is
         raised.
 
         Returns
         -------
-        ``datetime.datetime`` object of the time the file was last updated, if
+        ``datetime.datetime`` object of the UTC time the file was last updated,
+        if
         it exists
 
         Raises
@@ -272,14 +275,14 @@ class Plist:
     @property
     def file_accessed(self) -> datetime:
         """
-        Property - returns a ``datetime.datetime`` object of the time
+        Property - returns a ``datetime.datetime`` object of the UTC time
         the file was accessed. If it does exist a ``FileNotFoundError`` is
         raised.
 
         Returns
         -------
-        ``datetime.datetime`` object of the time the file was last accessed, if
-        it exists
+        ``datetime.datetime`` object of the UTC time the file was last
+        accessed, if it exists
 
         Raises
         ------
