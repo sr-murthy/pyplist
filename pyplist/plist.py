@@ -5,13 +5,13 @@ __all__ = [
 
 import os
 import plistlib
+import stat
 
 from datetime import datetime
 from pathlib import Path
 
 from types import MappingProxyType
 from typing import (
-    Any,
     Tuple,
     Union,
 )
@@ -48,11 +48,11 @@ class Plist:
         except (TypeError, FileNotFoundError, plistlib.InvalidFileException):
             raise plistlib.InvalidFileException(INVALID_PLIST_FILE_MSG)
         else:
-            self._path = Path(plist_input)
+            self._fp = Path(plist_input)
             self._name = name
 
     @property
-    def path(self) -> Union[None, Path]:
+    def file_path(self) -> Union[None, Path]:
         """
         Property - returns plist file path, if one was provided.
 
@@ -61,7 +61,7 @@ class Plist:
         Null if no file path was provided in initialisation, or a
         ``Pathlib.Path`` object containing the file path.
         """
-        return self._path
+        return self._fp
 
     @property
     def name(self):
@@ -83,7 +83,7 @@ class Plist:
         ``plistlib.InvalidFileException``
         """
         try:
-            plist_dict = plist_from_path(self.path)
+            plist_dict = plist_from_path(self.file_path)
         except (FileNotFoundError, plistlib.InvalidFileException) as e:
             raise e
         else:
@@ -109,8 +109,8 @@ class Plist:
     @property
     def hash(self):
         """
-        Property - returns an integer hash of the plist data; wrapper attribute for
-        ``self.__hash__()``.
+        Property - returns an integer hash of the plist data; wrapper attribute
+        for ``self.__hash__()``.
 
         Returns
         -------
@@ -133,14 +133,16 @@ class Plist:
         Whether the two plists are equal (in data)
         """
         this_plist_values = pd.Series(self.data).sort_index().transform(str)
-        other_plist_values = pd.Series(other_plist.data).sort_index().transform(str)
+        other_plist_values = pd.Series(
+            other_plist.data
+        ).sort_index().transform(str)
 
         return this_plist_values.equals(other_plist_values)
 
     @property
     def keys(self) -> Tuple[str]:
         """
-        Property - returns a tuple of the plist keys.
+        Property - returns a tuple of the JSON-normalized plist keys.
 
         Returns
         -------
@@ -149,30 +151,59 @@ class Plist:
         return tuple(self.data.keys())
 
     @property
-    def values(self) -> Tuple[Any]:
+    def values(self) -> Tuple[Union[bool, int, float, str, bytes, list]]:
         """
-        Property - returns a tuple of the plist values.
+        Property - returns a tuple of the JSON-normalized plist values.
 
         Returns
         -------
-        Tuple of plist values
+        ``tuple`` of plist values
         """
         return tuple(self.data.values())
 
     @property
-    def exists(self) -> bool:
+    def file_exists(self) -> bool:
         """
-        Property - returns a bool of whether there is an underlying plist
-        file existing on the filesystem.
+        Property - returns a bool of whether there the plist file exists.
 
         Returns
         -------
-        ``bool`` of whether the underlying plist file exists
+        ``bool`` of whether the plist file exists
         """
-        return self.path.exists()
+        return self.file_path.exists()
 
     @property
-    def created(self) -> str:
+    def file_mode(self) -> str:
+        """
+        Property - returns the underlying plist file mode string.
+
+        Returns
+        -------
+        ``str`` of the plist file mode
+
+        Raises
+        ------
+        ``FileNotFoundError` if the file no longer exists
+        """
+        return stat.filemode(os.stat(self.file_path).st_mode)
+
+    @property
+    def file_size(self) -> int:
+        """
+        Property - returns the file size in bytes
+
+        Returns
+        -------
+        ``int`` of the plist file size in bytes
+
+        Raises
+        ------
+        ``FileNotFoundError` if the file no longer exists
+        """
+        return os.path.getsize(self.file_path)
+
+    @property
+    def file_created(self) -> str:
         """
         Property - returns the creation time string of the underlying plist
         file, if it exists.
@@ -180,31 +211,40 @@ class Plist:
         Returns
         -------
         The creation time string of the underlying plist file, if it exists.
+
+        Raises
+        ------
+        ``FileNotFoundError` if the file no longer exists
         """
-        created_epoch_time = os.path.getctime(self.path)
+        created_epoch_time = os.path.getctime(self.file_path)
 
         return datetime.utcfromtimestamp(created_epoch_time).strftime(
             '%Y-%m-%d %H:%M:%S'
         )
 
     @property
-    def updated(self) -> str:
+    def file_updated(self) -> str:
         """
         Property - returns the last updated time string of the underlying plist
         file, if it exists.
 
         Returns
         -------
-        The last updated time string of the underlying plist file, if it exists.
+        The last updated time string of the underlying plist file, if it
+        exists.
+
+        Raises
+        ------
+        ``FileNotFoundError` if the file no longer exists
         """
-        updated_epoch_time = os.path.getmtime(self.path)
+        updated_epoch_time = os.path.getmtime(self.file_path)
 
         return datetime.utcfromtimestamp(updated_epoch_time).strftime(
             '%Y-%m-%d %H:%M:%S'
         )
 
     @property
-    def accessed(self) -> str:
+    def file_accessed(self) -> str:
         """
         Property - returns the last access time string of the underlying plist
         file, if it exists.
@@ -212,31 +252,45 @@ class Plist:
         Returns
         -------
         The last access time string of the underlying plist file, if it exists.
+
+        Raises
+        ------
+        ``FileNotFoundError` if the file no longer exists
         """
-        accessed_epoch_time = os.path.getatime(self.path)
+        accessed_epoch_time = os.path.getatime(self.file_path)
 
         return datetime.utcfromtimestamp(accessed_epoch_time).strftime(
             '%Y-%m-%d %H:%M:%S'
         )
 
     @property
-    def owner(self) -> str:
+    def file_owner(self) -> str:
         """
-        Property - returns the user/owner name of the underlying plist file, if it exists.
+        Property - returns the user/owner name of the underlying plist file, if
+        it exists.
 
         Returns
         -------
         The user/owner name of the underlying plist file, if it exists.
+
+        Raises
+        ------
+        ``FileNotFoundError` if the file no longer exists
         """
-        return self.path.owner()
+        return self.file_path.owner()
 
     @property
-    def group(self) -> str:
+    def file_group(self) -> str:
         """
-        Property - returns the user group name of the underlying plist file, if it exists.
+        Property - returns the user/owner group name of the underlying plist
+        file, if it exists.
 
         Returns
         -------
-        The user group name of the underlying plist file, if it exists.
+        The user/owner group name of the underlying plist file, if it exists.
+
+        Raises
+        ------
+        ``FileNotFoundError` if the file no longer exists
         """
-        return self.path.group()
+        return self.file_path.group()

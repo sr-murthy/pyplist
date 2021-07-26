@@ -28,10 +28,12 @@ with open(readme_file, 'r') as long_desc_fh:
 setup(
     name='pyplist',
     version=pyplist.__version__,
-    author='Sandeep Murthy',
+    author='Sandeep R. Murthy',
     author_email=(
         'smurthy@tuta.io'
     ),
+    maintainer='Sandeep R. Murthy',
+    maintainer_email='smurthy@tuta.io',
     description=(
         'A library and CLI tool for finding, inspecting and comparing plists '
         '(property list files), and detecting plists associated with '
@@ -41,6 +43,10 @@ setup(
     long_description=long_description,
     long_description_content_type='text/x-rst',
     url='https://github.com/sr-murthy/pyplist',
+    keywords=[
+        'plist',
+        'property list',
+    ],
     packages=find_packages(
         include=[
             'pyplist',
@@ -50,12 +56,12 @@ setup(
     py_modules=[
     ],
     entry_points={},
-    include_package_data=True,
     exclude_package_data={
         '': ['__pycache__', '*.py[co]'],
     },
     install_requires=python_requirements,
     classifiers=[
+        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)'
         'Development Status :: 4 - Beta',
         'Environment :: Console',
         'Programming Language :: Python :: 3',

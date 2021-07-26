@@ -1,5 +1,6 @@
 import os
 import plistlib
+import stat
 import textwrap
 
 from datetime import datetime
@@ -68,7 +69,7 @@ class TestPlist(TestCase):
             test_name = 'test__init__valid_plist_file__path_and_name_stored'
             received_plist = Plist(plist_file.name, name=test_name)
 
-            self.assertEqual(received_plist.path, Path(plist_file.name))
+            self.assertEqual(received_plist.file_path, Path(plist_file.name))
             self.assertEqual(received_plist.name, test_name)
 
     def test__init__valid_plist_file__no_post_creation_modification__all_properties_correctly_set(self):
@@ -106,7 +107,7 @@ class TestPlist(TestCase):
             received_plist = Plist(plist_file.name, name=test_name)
 
             # Check plist path
-            self.assertEqual(received_plist.path, Path(plist_file.name))
+            self.assertEqual(received_plist.file_path, Path(plist_file.name))
 
             # Check plist name
             self.assertEqual(received_plist.name, test_name)
@@ -136,28 +137,36 @@ class TestPlist(TestCase):
             self.assertEqual(received_plist.values, tuple(['one', 2, False]))
 
             # Check plist exists
-            self.assertTrue(received_plist.exists)
+            self.assertTrue(received_plist.file_exists)
+
+            # Check plist file mode
+            expected_file_mode = stat.filemode(os.stat(Path(plist_file.name)).st_mode)
+            self.assertEqual(received_plist.file_mode, expected_file_mode)
+
+            # Check plist file size
+            expected_file_size = os.path.getsize(Path(plist_file.name))
+            self.assertEqual(received_plist.file_size, expected_file_size)
 
             # Check plist creation time
             expected_created = datetime.utcfromtimestamp(
                 os.path.getctime(Path(plist_file.name))).strftime('%Y-%m-%d %H:%M:%S')
-            self.assertEqual(received_plist.created, expected_created)
+            self.assertEqual(received_plist.file_created, expected_created)
 
             # Check plist updated time
             expected_updated = datetime.utcfromtimestamp(
                 os.path.getmtime(Path(plist_file.name))).strftime('%Y-%m-%d %H:%M:%S')
-            self.assertEqual(received_plist.updated, expected_updated)
+            self.assertEqual(received_plist.file_updated, expected_updated)
 
             # Check plist accessed time
             expected_accessed = datetime.utcfromtimestamp(
                 os.path.getatime(Path(plist_file.name))).strftime('%Y-%m-%d %H:%M:%S')
-            self.assertEqual(received_plist.accessed, expected_accessed)
+            self.assertEqual(received_plist.file_accessed, expected_accessed)
 
             # Check plist file owner login name
-            self.assertEqual(received_plist.owner, Path(plist_file.name).owner())
+            self.assertEqual(received_plist.file_owner, Path(plist_file.name).owner())
 
-            # Check plist file gid group name
-            self.assertEqual(received_plist.group, Path(plist_file.name).group())
+            # Check plist file group name
+            self.assertEqual(received_plist.file_group, Path(plist_file.name).group())
 
     def test__data_property__valid_plist_file_deleted_after_creation__data_prop_call_triggers_file_not_found_error(self):
         plist = """<?xml version="1.0" encoding="UTF-8"?>

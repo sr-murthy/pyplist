@@ -107,9 +107,10 @@ def plist_from_path(plist_path: Union[str, Path]) -> dict:
                 plist = plistlib.load(plist_file, fmt=plistlib.FMT_BINARY)
 
                 # A corrupted or invalid binary plist file may not necessarily
-                # trigger an ``plistlib.plistlib.InvalidFileException`` - here, ``plist``
-                # might just end up as a malformed bytes object, so in that case
-                # we need to manually trigger the ``plistlib.InvalidFileException``
+                # trigger an ``plistlib.plistlib.InvalidFileException`` - here,
+                # ``plist`` might just end up as a malformed bytes object, so
+                # in that case we need to manually trigger the
+                # ``plistlib.InvalidFileException``
                 if not isinstance(plist, dict):
                     raise plistlib.InvalidFileException(INVALID_PLIST_FILE_MSG)
         except FileNotFoundError as e:
@@ -120,9 +121,10 @@ def plist_from_path(plist_path: Union[str, Path]) -> dict:
                     plist = plistlib.load(plist_file, fmt=plistlib.FMT_XML)
 
                     # A corrupted or invalid XML plist file may not necessarily
-                    # trigger an ``plistlib.plistlib.InvalidFileException`` - here, ``plist``
-                    # might just end up as a malformed XML string, so in that case
-                    # we need to manually trigger the ``plistlib.InvalidFileException``
+                    # trigger an ``plistlib.plistlib.InvalidFileException`` -
+                    # here, ``plist`` might just end up as a malformed XML
+                    # string, so in that case we need to manually trigger the
+                    # ``plistlib.InvalidFileException``
                     if not isinstance(plist, dict):
                         raise plistlib.InvalidFileException
             except (ExpatError, plistlib.InvalidFileException):
