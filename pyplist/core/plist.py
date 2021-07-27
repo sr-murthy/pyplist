@@ -11,10 +11,6 @@ from datetime import datetime
 from pathlib import Path
 
 from types import MappingProxyType
-from typing import (
-    Tuple,
-    Union,
-)
 
 import pandas as pd
 
@@ -36,11 +32,7 @@ class Plist:
     Implements ``__hash__`` to allow hashing of the plist properties, and
     ``__eq__`` to allow two plist objects to be compared for equality.
     """
-    def __init__(
-        self,
-        plist_input: Union[str, Path],
-        name=None
-    ) -> None:
+    def __init__(self, plist_input, name=None):
         """
         Class initialiser - accepts either a plist file path string or a
         ``pathlib.Path`` object.
@@ -54,14 +46,15 @@ class Plist:
             self._name = name
 
     @property
-    def file_path(self) -> Union[None, Path]:
+    def file_path(self):
         """
         Property - returns plist file path, if one was provided.
 
         Returns
         -------
-        Null if no file path was provided in initialisation, or a
-        ``Pathlib.Path`` object containing the file path.
+        ``None``, ``pathlib.Path`` :
+            Null if no file path was provided in initialisation, or a
+            ``Pathlib.Path`` object containing the file path.
         """
         return self._fp
 
@@ -70,7 +63,7 @@ class Plist:
         return self._name
 
     @property
-    def properties(self) -> MappingProxyType:
+    def properties(self):
         """
         Property - returns the read-only, JSON-normalized plist dict from
         reading the latest content of the underling plist file.
@@ -93,7 +86,7 @@ class Plist:
                 json_normalized_plist(plist_dict)
             )
 
-    def __repr__(self) -> str:
+    def __repr__(self):
         """
         ``__repr__`` implementation - the string produced should, if executed,
         in Python, reproduce a ``Plist`` object which has the same properties
@@ -109,7 +102,7 @@ class Plist:
             f')'
         )
 
-    def __hash__(self) -> int:
+    def __hash__(self):
         """
         Returns the integer hash of the BLAKE2b hash of the plist properties -
         this is computed by taking the BLAKE2b hash of the sorted Pandas
@@ -137,7 +130,7 @@ class Plist:
         """
         return self.__hash__()
 
-    def __eq__(self, other_plist) -> bool:
+    def __eq__(self, other_plist):
         """
         ``Plist`` object equality comparator - equality is based on equality of
         the Pandas series of values for the two plists. The file attributes are
@@ -160,7 +153,7 @@ class Plist:
         return this_plist_values.equals(other_plist_values)
 
     @property
-    def keys(self) -> Tuple[str]:
+    def keys(self):
         """
         Property - returns a tuple of the JSON-normalized plist keys.
 
@@ -171,7 +164,7 @@ class Plist:
         return tuple(self.properties.keys())
 
     @property
-    def values(self) -> Tuple[Union[bool, int, float, str, bytes, list]]:
+    def values(self):
         """
         Property - returns a tuple of the JSON-normalized plist values.
         The allowable Python types are ``bool``, ``int``, ``float``, ``str``,
@@ -185,7 +178,7 @@ class Plist:
         return tuple(self.properties.values())
 
     @property
-    def file_exists(self) -> bool:
+    def file_exists(self):
         """
         Property - returns a bool of whether the plist file path currently
         exists.
@@ -197,7 +190,7 @@ class Plist:
         return self.file_path.exists()
 
     @property
-    def file_type(self) -> str:
+    def file_type(self):
         """
         Property - returns the plist file type: ``'xml'`` or ``'binary'``.
 
@@ -210,7 +203,7 @@ class Plist:
         return file_type
 
     @property
-    def file_mode(self) -> str:
+    def file_mode(self):
         """
         Property - returns the underlying plist file mode string.
 
@@ -225,7 +218,7 @@ class Plist:
         return stat.filemode(os.stat(self.file_path).st_mode)
 
     @property
-    def file_size(self) -> int:
+    def file_size(self):
         """
         Property - returns the file size in bytes
 
@@ -240,7 +233,7 @@ class Plist:
         return os.path.getsize(self.file_path)
 
     @property
-    def file_created(self) -> datetime:
+    def file_created(self):
         """
         Property - returns a ``datetime.datetime`` object of the file creation
         UTC time. If it does not exist a ``FileNotFoundError`` is raised.
@@ -259,7 +252,7 @@ class Plist:
         return datetime.utcfromtimestamp(created_epoch_time)
 
     @property
-    def file_updated(self) -> datetime:
+    def file_updated(self):
         """
         Property - returns a ``datetime.datetime`` object of the UTC time
         the file was updated. If it does exist a ``FileNotFoundError`` is
@@ -280,7 +273,7 @@ class Plist:
         return datetime.utcfromtimestamp(updated_epoch_time)
 
     @property
-    def file_accessed(self) -> datetime:
+    def file_accessed(self):
         """
         Property - returns a ``datetime.datetime`` object of the UTC time
         the file was accessed. If it does exist a ``FileNotFoundError`` is
@@ -300,7 +293,7 @@ class Plist:
         return datetime.utcfromtimestamp(accessed_epoch_time)
 
     @property
-    def file_owner(self) -> str:
+    def file_owner(self):
         """
         Property - returns the user/owner name of the underlying plist file, if
         it exists.
@@ -316,7 +309,7 @@ class Plist:
         return self.file_path.owner()
 
     @property
-    def file_group(self) -> str:
+    def file_group(self):
         """
         Property - returns the user/owner group name of the underlying plist
         file, if it exists.
@@ -332,7 +325,7 @@ class Plist:
         return self.file_path.group()
 
     @property
-    def file_summary(self) -> pd.DataFrame:
+    def file_summary(self):
         """
         Property - returns a Pandas dataframe summarising the key file
         properties: name, directory, whether the file exists, the user/owner,
