@@ -4,3 +4,4 @@ coverage
 tox
 codecov
 flake8
+mypy
