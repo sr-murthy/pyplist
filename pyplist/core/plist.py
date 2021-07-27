@@ -31,6 +31,8 @@ class Plist:
     Basic Plist class - exposes the given plist file properties via a property
     that retrieves the latest stored version of the plist file properties.
 
+    .. note:: Only XML and binary versions of XML plists are supported.
+
     Implements ``__hash__`` to allow hashing of the plist properties, and
     ``__eq__`` to allow two plist objects to be compared for equality.
     """
