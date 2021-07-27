@@ -235,6 +235,52 @@ class TestPlist(TestCase):
 
             self.assertEqual(received_plist.__repr__(), expected_plist_repr)
 
+    def test_name_property_setter__valid_plist_created_with_no_name__prop_call_sets_new_name_set_correctly(self):
+        plist = """<?xml version="1.0" encoding="UTF-8"?>
+                <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+                <plist version="1.0">
+                <dict>
+                    <key>a</key>
+                    <string>one</string>
+                </dict>
+                </plist>
+                """
+
+        with NamedTemporaryFile('wb') as plist_file:
+            plist_file.write(textwrap.dedent(plist).encode('utf8'))
+            plist_file.flush()
+
+            received_plist = Plist(plist_file.name, name=None)
+
+            self.assertIsNone(received_plist.name)
+
+            received_plist.name = 'new_name'
+
+            self.assertEqual(received_plist.name, 'new_name')
+
+    def test_name_property_setter__valid_plist_created_with_a_name__prop_call_sets_new_name_set_correctly(self):
+        plist = """<?xml version="1.0" encoding="UTF-8"?>
+                <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+                <plist version="1.0">
+                <dict>
+                    <key>a</key>
+                    <string>one</string>
+                </dict>
+                </plist>
+                """
+
+        with NamedTemporaryFile('wb') as plist_file:
+            plist_file.write(textwrap.dedent(plist).encode('utf8'))
+            plist_file.flush()
+
+            received_plist = Plist(plist_file.name, name='initial_name')
+
+            self.assertEqual(received_plist.name, 'initial_name')
+
+            received_plist.name = 'new_name'
+
+            self.assertEqual(received_plist.name, 'new_name')
+
     def test__properties_property__valid_plist_file_deleted_after_creation__prop_call_triggers_file_not_found_error(self):
         plist = """<?xml version="1.0" encoding="UTF-8"?>
                 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

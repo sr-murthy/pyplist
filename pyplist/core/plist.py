@@ -60,7 +60,26 @@ class Plist:
 
     @property
     def name(self):
+        """
+        Property - returns the plist name.
+
+        Returns
+        -------
+        ``str`` : the plist name
+
+        """
         return self._name
+
+    @name.setter
+    def name(self, _name):
+        """
+        Property setter - sets the plist name
+
+        Parameters
+        ----------
+        ``_name`` : The new plist name to set
+        """
+        self._name = _name
 
     @property
     def properties(self):
