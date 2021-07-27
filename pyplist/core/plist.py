@@ -133,8 +133,8 @@ class Plist:
     def __eq__(self, other_plist):
         """
         ``Plist`` object equality comparator - equality is based on equality of
-        the Pandas series of values for the two plists. The file attributes are
-        ignored.
+        the Pandas series of property values for the two plists. The file
+        attributes are ignored.
 
         Parameters
         ----------
