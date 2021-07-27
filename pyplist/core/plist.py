@@ -28,10 +28,10 @@ from ..utils import (
 
 class Plist:
     """
-    Basic Plist class - exposes the given plist file data via a property
-    that retrieves the latest stored version of the plist file data.
+    Basic Plist class - exposes the given plist file properties via a property
+    that retrieves the latest stored version of the plist file properties.
 
-    Implements ``__hash__`` to allow hashing of the plist data, and
+    Implements ``__hash__`` to allow hashing of the plist properties, and
     ``__eq__`` to allow two plist objects to be compared for equality.
     """
     def __init__(
@@ -68,7 +68,7 @@ class Plist:
         return self._name
 
     @property
-    def data(self) -> MappingProxyType:
+    def properties(self) -> MappingProxyType:
         """
         Property - returns the read-only, JSON-normalized plist dict from
         reading the latest content of the underling plist file.
@@ -94,10 +94,10 @@ class Plist:
     def __repr__(self) -> str:
         """
         ``__repr__`` implementation - the string produced should, if executed,
-        in Python, reproduce a ``Plist`` object which has the same data as this
-        object (``self``), if the file still exists, and additionally the same
-        or similar file attributes, depending on any intermediate changes to
-        the file.
+        in Python, reproduce a ``Plist`` object which has the same properties
+        as this object (``self``), if the file still exists, and additionally
+        the same or similar file attributes, depending on any intermediate
+        changes to the file.
         """
         name_value = f'"{self.name}"' if self.name else "None"
 
@@ -109,28 +109,29 @@ class Plist:
 
     def __hash__(self) -> int:
         """
-        Returns the integer hash of the BLAKE2b hash of the plist data - this
-        is computed by taking the BLAKE2b hash of the sorted Pandas series of
-        values, and then taking the hash of the BLAKE2b hash value.
+        Returns the integer hash of the BLAKE2b hash of the plist properties -
+        this is computed by taking the BLAKE2b hash of the sorted Pandas
+        series of property values, and then taking the hash of the BLAKE2b
+        hash value.
 
         Returns
         -------
 
         The integer hash of the BLAKE2b hash value of the plist values
         """
-        plist_series = pd.Series(self.data).sort_index().transform(str)
+        plist_series = pd.Series(self.properties).sort_index().transform(str)
 
         return hash(blake2b_hash_iterable(plist_series))
 
     @property
     def hash(self):
         """
-        Property - returns an integer hash of the plist data; wrapper attribute
-        for ``self.__hash__()``.
+        Property - returns an integer hash of the plist properties; wrapper
+        attribute for ``self.__hash__()``.
 
         Returns
         -------
-        An integer hash of the plist data using ``self.__hash__()``
+        An integer hash of the plist properties using ``self.__hash__()``
         """
         return self.__hash__()
 
@@ -147,11 +148,11 @@ class Plist:
 
         Returns
         -------
-        Whether the two plists are equal (in data)
+        Whether the two plists are equal (in terms of their properties dicts)
         """
-        this_plist_values = pd.Series(self.data).sort_index().transform(str)
+        this_plist_values = pd.Series(self.properties).sort_index().transform(str)
         other_plist_values = pd.Series(
-            other_plist.data
+            other_plist.properties
         ).sort_index().transform(str)
 
         return this_plist_values.equals(other_plist_values)
@@ -165,7 +166,7 @@ class Plist:
         -------
         Tuple of plist keys
         """
-        return tuple(self.data.keys())
+        return tuple(self.properties.keys())
 
     @property
     def values(self) -> Tuple[Union[bool, int, float, str, bytes, list]]:
@@ -179,7 +180,7 @@ class Plist:
         -------
         ``tuple`` of plist values
         """
-        return tuple(self.data.values())
+        return tuple(self.properties.values())
 
     @property
     def file_exists(self) -> bool:

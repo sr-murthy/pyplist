@@ -96,7 +96,7 @@ class TestPlist(TestCase):
                 </plist>
                 """
 
-        expected_plist_data = MappingProxyType({
+        expected_plist_dict = MappingProxyType({
             'a': 'one',
             'b': 2,
             'c.d.e': False
@@ -116,10 +116,10 @@ class TestPlist(TestCase):
             # Check plist name
             self.assertEqual(received_plist.name, test_name)
 
-            # Check plist data
-            self.assertEqual(received_plist.data, expected_plist_data)
+            # Check plist properties dict
+            self.assertEqual(received_plist.properties, expected_plist_dict)
 
-            # Check plist data hash (using the BLAKE2b hash function)
+            # Check plist properties hash (using the BLAKE2b hash function)
             expected_plist_str_series = pd.Series(
                 ['one', '2', 'False'],
                 index=['a', 'b', 'c.d.e']
@@ -134,10 +134,10 @@ class TestPlist(TestCase):
 
             self.assertEqual(received_plist.hash, expected_plist_hash)
 
-            # Check plist data keys
+            # Check plist properties keys
             self.assertEqual(received_plist.keys, tuple(['a', 'b', 'c.d.e']))
 
-            # Check plist data values
+            # Check plist properties values
             self.assertEqual(received_plist.values, tuple(['one', 2, False]))
 
             # Check plist exists
@@ -235,7 +235,7 @@ class TestPlist(TestCase):
 
             self.assertEqual(received_plist.__repr__(), expected_plist_repr)
 
-    def test__data_property__valid_plist_file_deleted_after_creation__data_prop_call_triggers_file_not_found_error(self):
+    def test__properties_property__valid_plist_file_deleted_after_creation__prop_call_triggers_file_not_found_error(self):
         plist = """<?xml version="1.0" encoding="UTF-8"?>
                 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
                 <plist version="1.0">
@@ -264,16 +264,16 @@ class TestPlist(TestCase):
 
             received_plist = Plist(plist_file.name)
 
-            # Check the plist ``data`` property call - it's a valid plist, so the
+            # Check the plist ``properties`` property call - it's a valid plist, so the
             # call should return something (we don't care what at this point)
-            self.assertIsNotNone(received_plist.data)
+            self.assertIsNotNone(received_plist.properties)
 
-        # Temp. plist file is now gone - so the ``data`` property call will trigger
+        # Temp. plist file is now gone - so the ``properties`` property call will trigger
         # a ``FileNotFoundError``
         with self.assertRaises(FileNotFoundError):
-            received_plist.data
+            received_plist.properties
 
-    def test__data_property__valid_plist_file_corrupted_after_creation__data_prop_call_triggers_plistlib_invalid_file_exception(self):
+    def test__properties_property__valid_plist_file_corrupted_after_creation__prop_call_triggers_plistlib_invalid_file_exception(self):
         plist = """<?xml version="1.0" encoding="UTF-8"?>
                 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
                 <plist version="1.0">
@@ -302,17 +302,17 @@ class TestPlist(TestCase):
 
             received_plist = Plist(plist_file.name)
 
-            # Check the plist ``data`` property call - it's a valid plist, so the
+            # Check the plist ``properties`` property call - it's a valid plist, so the
             # call should return something (we don't care what at this point)
-            self.assertIsNotNone(received_plist.data)
+            self.assertIsNotNone(received_plist.properties)
 
-            # Write some bad data to the plist file and check that the ``data``
+            # Write some bad data to the plist file and check that the ``properties``
             # property call triggers a ``plistlib.InvalidFileException``
             plist_file.write('!BAD£%$@£DATA'.encode('utf8'))
             plist_file.flush()
 
             with self.assertRaises(plistlib.InvalidFileException):
-                received_plist.data
+                received_plist.properties
 
     def test__hash__valid_plist_file__correct_hash_returned(self):
         plist = """<?xml version="1.0" encoding="UTF-8"?>
@@ -341,7 +341,7 @@ class TestPlist(TestCase):
 
             received_plist = Plist(plist_file.name)
 
-            # Check plist data hash (using the BLAKE2b hash function)
+            # Check plist properties hash (using the BLAKE2b hash function)
             expected_plist_str_series = pd.Series(
                 ['one', '2', 'False'],
                 index=['a', 'b', 'c.d.e']
