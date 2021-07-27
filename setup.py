@@ -61,7 +61,7 @@ setup(
     },
     install_requires=python_requirements,
     classifiers=[
-        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)'
+        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Development Status :: 4 - Beta',
         'Environment :: Console',
         'Programming Language :: Python :: 3',

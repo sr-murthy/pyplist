@@ -23,8 +23,6 @@ from xml.parsers.expat import ExpatError
 
 import pandas as pd
 
-from pandas import json_normalize
-
 
 INVALID_PLIST_FILE_MSG = textwrap.dedent(
     """
@@ -158,7 +156,7 @@ def json_normalized_plist(plist: Mapping) -> dict:
     -------
     Read-only dict of the given plist, with JSON normalised keys
     """
-    plist_df = json_normalize(plist).T
+    plist_df = pd.json_normalize(plist).T
     plist_df = plist_df.copy(deep=True)
     plist_df.columns = pd.Index(['value'])
 
