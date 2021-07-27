@@ -113,6 +113,9 @@ class TestPlist(TestCase):
             plist_file_path = Path(plist_file.name).absolute()
             self.assertEqual(received_plist.file_path, plist_file_path)
 
+            # Check plist XML version
+            self.assertEqual(received_plist.plist_version, '1.0')
+
             # Check plist name
             self.assertEqual(received_plist.name, test_name)
 
@@ -183,6 +186,7 @@ class TestPlist(TestCase):
                 'dir': os.path.dirname(plist_file_path),
                 'exists': True,
                 'type': 'xml',
+                'plist_version': '1.0',
                 'user': expected_file_owner,
                 'group': expected_file_group,
                 'size': expected_file_size,
@@ -235,7 +239,7 @@ class TestPlist(TestCase):
 
             self.assertEqual(received_plist.__repr__(), expected_plist_repr)
 
-    def test_name_property_setter__valid_plist_created_with_no_name__prop_call_sets_new_name_set_correctly(self):
+    def test__name_property_setter__valid_plist_created_with_no_name__prop_call_sets_new_name_set_correctly(self):
         plist = """<?xml version="1.0" encoding="UTF-8"?>
                 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
                 <plist version="1.0">
@@ -258,7 +262,7 @@ class TestPlist(TestCase):
 
             self.assertEqual(received_plist.name, 'new_name')
 
-    def test_name_property_setter__valid_plist_created_with_a_name__prop_call_sets_new_name_set_correctly(self):
+    def test__name_property_setter__valid_plist_created_with_a_name__prop_call_sets_new_name_set_correctly(self):
         plist = """<?xml version="1.0" encoding="UTF-8"?>
                 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
                 <plist version="1.0">
@@ -280,6 +284,37 @@ class TestPlist(TestCase):
             received_plist.name = 'new_name'
 
             self.assertEqual(received_plist.name, 'new_name')
+
+    def test__plist_version_property__valid_xml_plist__prop_call_returns_correct_version_str(self):
+        plist = """<?xml version="1.0" encoding="UTF-8"?>
+                <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+                <plist version="1.0">
+                <dict>
+                    <key>a</key>
+                    <string>one</string>
+                </dict>
+                </plist>
+                """
+
+        with NamedTemporaryFile('wb') as plist_file:
+            plist_file.write(textwrap.dedent(plist).encode('utf8'))
+            plist_file.flush()
+
+            received_plist = Plist(plist_file.name)
+
+            self.assertEqual(received_plist.plist_version, '1.0')
+
+    def test__plist_version_property__valid_binary_plist__prop_call_returns_null(self):
+
+        # ``test_binary.plist`` is a static test binary plist file generated
+        # converted from a valid XML plist file, with the same content as in
+        # the test case above. So the ``Plist`` obtained from this file should
+        # have the same data as in the test case above
+        test_binary_plist_file = Path('tests/core/test_binary.plist')
+
+        with open(test_binary_plist_file, 'rb') as plist_file:
+            received_plist = Plist(plist_file.name)
+            self.assertIsNone(received_plist.plist_version)
 
     def test__properties_property__valid_plist_file_deleted_after_creation__prop_call_triggers_file_not_found_error(self):
         plist = """<?xml version="1.0" encoding="UTF-8"?>

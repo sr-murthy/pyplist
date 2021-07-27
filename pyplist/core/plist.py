@@ -9,6 +9,7 @@ import stat
 
 from datetime import datetime
 from pathlib import Path
+from xml.etree import ElementTree as XmlElementTree
 
 from types import MappingProxyType
 
@@ -59,6 +60,24 @@ class Plist:
         return self._fp
 
     @property
+    def plist_version(self):
+        """
+        Returns the plist (XML) version - applicable only to XML plists.
+
+        Returns
+        -------
+        ``str``, ``None`` :
+            The plist (XML) version string, if the plist file is XML. Could
+            be null also
+        """
+        if self.file_type != 'xml':
+            return
+
+        plist_root = XmlElementTree.parse(self.file_path).getroot()
+
+        return plist_root.attrib.get('version')
+
+    @property
     def name(self):
         """
         Property - returns the plist name.
@@ -80,6 +99,22 @@ class Plist:
         ``_name`` : The new plist name to set
         """
         self._name = _name
+
+    def __repr__(self):
+        """
+        ``__repr__`` implementation - the string produced should, if executed,
+        in Python, reproduce a ``Plist`` object which has the same properties
+        as this object (``self``), if the file still exists, and additionally
+        the same or similar file attributes, depending on any intermediate
+        changes to the file.
+        """
+        name_value = f'"{self.name}"' if self.name else "None"
+
+        return (
+            f'{self.__module__}.{self.__class__.__name__}('
+            f'"{self.file_path}", name={name_value}'
+            f')'
+        )
 
     @property
     def properties(self):
@@ -104,22 +139,6 @@ class Plist:
             return MappingProxyType(
                 json_normalized_plist(plist_dict)
             )
-
-    def __repr__(self):
-        """
-        ``__repr__`` implementation - the string produced should, if executed,
-        in Python, reproduce a ``Plist`` object which has the same properties
-        as this object (``self``), if the file still exists, and additionally
-        the same or similar file attributes, depending on any intermediate
-        changes to the file.
-        """
-        name_value = f'"{self.name}"' if self.name else "None"
-
-        return (
-            f'{self.__module__}.{self.__class__.__name__}('
-            f'"{self.file_path}", name={name_value}'
-            f')'
-        )
 
     def __hash__(self):
         """
@@ -367,6 +386,7 @@ class Plist:
             'dir': str(self.file_path.parent.absolute()),
             'exists': self.file_exists,
             'type': self.file_type,
+            'plist_version': self.plist_version,
             'user': self.file_owner,
             'group': self.file_group,
             'size': self.file_size,
