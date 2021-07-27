@@ -48,7 +48,7 @@ def find_plist_files(target_dir, recursive=False):
         plist_file_paths = (
             _target_dir.joinpath(file_name)
             for file_name in os.listdir(_target_dir)
-            if file_name.endswith('.plist')
+            if file_name.lower().endswith('.plist')
         )
         for path in plist_file_paths:
             try:
@@ -61,7 +61,7 @@ def find_plist_files(target_dir, recursive=False):
             Path(root).resolve().joinpath(file_name)
             for root, _, file_names in os.walk(_target_dir)
             for file_name in file_names
-            if file_name.endswith('.plist')
+            if file_name.lower().endswith('.plist')
         )
 
         for path in plist_file_paths:
