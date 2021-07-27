@@ -17,4 +17,4 @@ pyplist
 
 A library and CLI tool for finding, inspecting and comparing plists (property list files), and detecting plists associated with non-standard or malicious processes and apps, on Apple MacOS/OX X, iOS and other relevant systems and devices.
 
-.. note:: Only XML and binary versions of XML plists are supported.
+.. note:: **Only XML and binary versions of XML plists are supported.**
