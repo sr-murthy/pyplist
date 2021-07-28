@@ -8,8 +8,8 @@ from xml.parsers.expat import ExpatError
 
 from pyplist.utils import (
     blake2b_hash_iterable,
-    json_normalized_plist,
-    plist_from_path,
+    json_normalized_plist_dict,
+    plist_dict_from_path,
 )
 
 from tempfile import NamedTemporaryFile
@@ -159,7 +159,7 @@ class TestPlistFromPath(TestCase):
 
     def test__non_existent_plist_file_path__file_not_found_error_raised(self):
         with self.assertRaises(FileNotFoundError):
-            plist_from_path('/non/existent/plist.plist')
+            plist_dict_from_path('/non/existent/plist.plist')
 
     def test__invalid_binary_plist_file_path__invalid_file_exception_raised(self):
         binary_plist = (
@@ -180,7 +180,7 @@ class TestPlistFromPath(TestCase):
             binary_plist_file.flush()
 
             with self.assertRaises(InvalidFileException):
-                plist_from_path(binary_plist_file.name)
+                plist_dict_from_path(binary_plist_file.name)
 
     def test__invalid_xml_plist_file_path__invalid_file_exception_raised(self):
         xml_plist = textwrap.dedent("""<?xml version="1.0" encoding="UTF-8">?
@@ -198,7 +198,7 @@ class TestPlistFromPath(TestCase):
             xml_plist_file.flush()
 
             with self.assertRaises(InvalidFileException):
-                plist_from_path(xml_plist_file.name)
+                plist_dict_from_path(xml_plist_file.name)
 
 
     def test__valid_xml_plist_file_path__correct_plist_dict_and_xml_type_returned(self):
@@ -236,7 +236,7 @@ class TestPlistFromPath(TestCase):
             xml_plist_file.write(xml_plist.encode('utf8'))
             xml_plist_file.flush()
 
-            received_plist_dict, received_plist_type = plist_from_path(xml_plist_file.name)
+            received_plist_dict, received_plist_type = plist_dict_from_path(xml_plist_file.name)
 
             self.assertEqual(received_plist_dict, expected_plist_dict)
             self.assertEqual(received_plist_type, 'xml')
@@ -257,7 +257,7 @@ class TestPlistFromPath(TestCase):
         # the test case above. So the ``Plist`` obtained from this file should
         # have the same data as in the test case above
         test_binary_plist_file = Path('tests/test_binary.plist')
-        received_plist_dict, received_plist_type = plist_from_path(test_binary_plist_file)
+        received_plist_dict, received_plist_type = plist_dict_from_path(test_binary_plist_file)
 
         self.assertEqual(received_plist_dict, expected_plist_dict)
         self.assertEqual(received_plist_type, 'binary')
@@ -283,6 +283,6 @@ class TestJsonNormalizedPlist(TestCase):
             'c.d.e': False
         }
 
-        received = json_normalized_plist(plist_dict)
+        received = json_normalized_plist_dict(plist_dict)
 
         self.assertEqual(received, expected)

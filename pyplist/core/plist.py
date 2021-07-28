@@ -18,8 +18,8 @@ import pandas as pd
 from ..utils import (
     blake2b_hash_iterable,
     INVALID_PLIST_FILE_MSG,
-    json_normalized_plist,
-    plist_from_path,
+    json_normalized_plist_dict,
+    plist_dict_from_path,
 )
 
 
@@ -39,7 +39,7 @@ class Plist:
         ``pathlib.Path`` object.
         """
         try:
-            plist_from_path(plist_input)
+            plist_dict_from_path(plist_input)
         except (TypeError, FileNotFoundError, plistlib.InvalidFileException):
             raise plistlib.InvalidFileException(INVALID_PLIST_FILE_MSG)
         else:
@@ -58,24 +58,6 @@ class Plist:
             ``Pathlib.Path`` object containing the file path.
         """
         return self._fp
-
-    @property
-    def plist_version(self):
-        """
-        Returns the plist (XML) version - applicable only to XML plists.
-
-        Returns
-        -------
-        ``str``, ``None`` :
-            The plist (XML) version string, if the plist file is XML. Could
-            be null also
-        """
-        if self.file_type != 'xml':
-            return
-
-        plist_root = XmlElementTree.parse(self.file_path).getroot()
-
-        return plist_root.attrib.get('version')
 
     @property
     def name(self):
@@ -99,6 +81,50 @@ class Plist:
         ``_name`` : The new plist name to set
         """
         self._name = _name
+
+    @property
+    def xml(self):
+        """
+        Returns the XML source string of the plist file, if it is an XML
+        file, otherwise this will be null if it is a valid binary plist
+        file, or will raise an appropriate error if there is a problem
+        with the file.
+
+        Returns
+        -------
+        ``None``, ``str`` :
+            Null if the plist file is a non-XML file, otherwise the source
+            XML string
+
+        Raises
+        ------
+        ``TypeError``, ``FileNotFoundError``, `plistlib.InvalidFileException``
+        """
+        _, file_type = plist_dict_from_path(self.file_path)
+
+        if file_type == 'binary':
+            return None
+
+        with open(self.file_path, 'r') as f:
+            return f.read()
+
+    @property
+    def plist_version(self):
+        """
+        Returns the plist (XML) version - applicable only to XML plists.
+
+        Returns
+        -------
+        ``str``, ``None`` :
+            The plist (XML) version string, if the plist file is XML. Could
+            be null also
+        """
+        if self.file_type != 'xml':
+            return
+
+        plist_root = XmlElementTree.parse(self.file_path).getroot()
+
+        return plist_root.attrib.get('version')
 
     def __repr__(self):
         """
@@ -132,12 +158,12 @@ class Plist:
         ``FileNotFoundError``, ``plistlib.InvalidFileException``
         """
         try:
-            plist_dict, _ = plist_from_path(self.file_path)
+            plist_dict, _ = plist_dict_from_path(self.file_path)
         except (FileNotFoundError, plistlib.InvalidFileException) as e:
             raise e
         else:
             return MappingProxyType(
-                json_normalized_plist(plist_dict)
+                json_normalized_plist_dict(plist_dict)
             )
 
     def __hash__(self):
@@ -236,7 +262,7 @@ class Plist:
         -------
         ``str`` of whether the plist file type: ``'xml'`` or ``'binary'``
         """
-        _, file_type = plist_from_path(self.file_path)
+        _, file_type = plist_dict_from_path(self.file_path)
 
         return file_type
 
