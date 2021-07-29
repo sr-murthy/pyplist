@@ -48,9 +48,10 @@ class TestFindPlists(TestCase):
 
                 self.assertEqual(list(find_plists(target_dir, recursive=False)), [])
 
-    def test__target_dir_has_plist_files_in_root_only__non_recursive_search__correct_plists_generated(self):
-        plist1_xml = """<?xml version="1.0" encoding="UTF-8"?>
+    def test__target_dir_has_invalid_plist_files_in_root_only__non_recursive_search__no_plists_generated(self):
+        invalid_plist1_xml = """<?xml version="1.0" encoding="UTF-8"?>
                     <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+                    <invalid plist file/>
                     <plist version="1.0">
                     <dict>
                         <key>a</key>
@@ -59,8 +60,9 @@ class TestFindPlists(TestCase):
                     </plist>
                     """
 
-        plist2_xml = """<?xml version="1.0" encoding="UTF-8"?>
+        invalid_plist2_xml = """<?xml version="1.0" encoding="UTF-8"?>
                     <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+                    <invalid plist file/>
                     <plist version="1.0">
                     <dict>
                         <key>b</key>
@@ -70,20 +72,85 @@ class TestFindPlists(TestCase):
                     """
 
         with TemporaryDirectory() as target_dir:
-            with open(Path(target_dir).joinpath('plist1.plist'), 'wb') as plist1_file:
-                with open(Path(target_dir).joinpath('plist2.plist'), 'wb') as plist2_file:
-                    plist1_file.write(textwrap.dedent(plist1_xml).encode('utf8'))
-                    plist1_file.flush()
-                    expected_plist1 = Plist(plist1_file.name)
+            with open(Path(target_dir).joinpath('plist1.plist'), 'wb') as invalid_plist1_file:
+                with open(Path(target_dir).joinpath('plist2.plist'), 'wb') as invalid_plist2_file:
+                    invalid_plist1_file.write(textwrap.dedent(invalid_plist1_xml).encode('utf8'))
+                    invalid_plist1_file.flush()
 
-                    plist2_file.write(textwrap.dedent(plist2_xml).encode('utf8'))
-                    plist2_file.flush()
-                    expected_plist2 = Plist(plist2_file.name)
+                    invalid_plist2_file.write(textwrap.dedent(invalid_plist2_xml).encode('utf8'))
+                    invalid_plist2_file.flush()
 
-                    received_plist1, received_plist2 = list(find_plists(target_dir, recursive=False))
+                    self.assertEqual(list(find_plists(target_dir, recursive=False)), [])
 
-                    assert received_plist1 == expected_plist1
-                    assert received_plist2 == expected_plist2
+    def test__target_dir_has_invalid_plist_files_in_root_only__recursive_search__no_plists_generated(self):
+        invalid_plist1_xml = """<?xml version="1.0" encoding="UTF-8"?>
+                    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+                    <invalid plist file/>
+                    <plist version="1.0">
+                    <dict>
+                        <key>a</key>
+                        <string>one</string>
+                    </dict>
+                    </plist>
+                    """
+
+        invalid_plist2_xml = """<?xml version="1.0" encoding="UTF-8"?>
+                    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+                    <invalid plist file/>
+                    <plist version="1.0">
+                    <dict>
+                        <key>b</key>
+                        <integer>2</integer>
+                    </dict>
+                    </plist>
+                    """
+
+        with TemporaryDirectory() as target_dir:
+            with open(Path(target_dir).joinpath('plist1.plist'), 'wb') as invalid_plist1_file:
+                with open(Path(target_dir).joinpath('plist2.plist'), 'wb') as invalid_plist2_file:
+                    invalid_plist1_file.write(textwrap.dedent(invalid_plist1_xml).encode('utf8'))
+                    invalid_plist1_file.flush()
+
+                    invalid_plist2_file.write(textwrap.dedent(invalid_plist2_xml).encode('utf8'))
+                    invalid_plist2_file.flush()
+
+                    self.assertEqual(list(find_plists(target_dir, recursive=True)), [])
+
+    def test__target_dir_has_invalid_plist_files_in_root_and_subfolder__recursive_search__no_plists_generated(self):
+        invalid_plist1_xml = """<?xml version="1.0" encoding="UTF-8"?>
+                    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+                    <plist version="1.0">
+                    <invalid plist file/>
+                    <dict>
+                        <key>a</key>
+                        <string>one</string>
+                    </dict>
+                    </plist>
+                    """
+
+        invalid_plist2_xml = """<?xml version="1.0" encoding="UTF-8"?>
+                    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+                    <plist version="1.0">
+                    <invalid plist file/>
+                    <dict>
+                        <key>b</key>
+                        <integer>2</integer>
+                    </dict>
+                    </plist>
+                    """
+
+        with TemporaryDirectory() as target_dir:
+            with open(Path(target_dir).joinpath('plist1.plist'), 'wb') as invalid_plist1_file:
+                invalid_plist1_file.write(textwrap.dedent(invalid_plist1_xml).encode('utf8'))
+                invalid_plist1_file.flush()
+
+                subfolder = Path(target_dir).joinpath('sub')
+                os.mkdir(subfolder)
+                with open(subfolder.joinpath('plist2.plist'), 'wb') as invalid_plist2_file:
+                    invalid_plist2_file.write(textwrap.dedent(invalid_plist2_xml).encode('utf8'))
+                    invalid_plist2_file.flush()
+
+                    self.assertEqual(list(find_plists(target_dir, recursive=True)), [])
 
     def test__target_dir_has_plist_files_in_root_and_subfolder__non_recursive_search__correct_plists_generated(self):
         plist1_xml = """<?xml version="1.0" encoding="UTF-8"?>
