@@ -1,5 +1,5 @@
 __all__ = [
-    'find_plist_files',
+    'find_plists',
 ]
 
 
@@ -11,7 +11,7 @@ from pathlib import Path
 from .plist import Plist
 
 
-def find_plist_files(target_dir, recursive=False):
+def find_plists(target_dir, recursive=False):
     """
     Find and generate all valid plist files in the target directory, if it
     exists. The valid plist files are generated as``core.plist.Plist``
@@ -55,7 +55,6 @@ def find_plist_files(target_dir, recursive=False):
                 yield Plist(path)
             except plistlib.InvalidFileException:
                 pass
-
     else:
         plist_file_paths = (
             Path(root).resolve().joinpath(file_name)
