@@ -9,9 +9,8 @@ import stat
 
 from datetime import datetime
 from pathlib import Path
-from xml.etree import ElementTree as XmlElementTree
-
 from types import MappingProxyType
+from xml.etree import ElementTree as XmlElementTree
 
 import pandas as pd
 
