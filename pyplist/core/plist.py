@@ -391,23 +391,34 @@ class Plist:
     @property
     def file_summary(self):
         """
-        Property - returns a Pandas dataframe summarising the key file
-        properties: name, directory, whether the file exists, the user/owner,
-        the user group, size in bytes, mode string, created time, last updated
-        time, last accessed time.
+        Property - returns a read-only dict summarising the key file
+        properties:
+        ::
+            * name
+            * directory path
+            * whether the file currently exists on the filesystem
+            * the file type - ``'xml'``, or ``'binary'``
+            * the plist XML version string
+            * the user/owner,
+            * the user group
+            * size in bytes
+            * file mode string
+            * created time
+            * last updated time
+            * last accessed time
 
         Returns
         -------
-        Returns a Pandas dataframe summarising the key file properties: name,
-        directory, whether the file exists, the user/owner, the user group,
-        size in bytes, mode string, created time, last updated time, last
-        accessed time.
+        Returns a read-only dict summarising the key file properties listed
+        above.
 
         Raises
         ------
         ``FileNotFoundError` if the file no longer exists
         """
-        return pd.DataFrame([{
+        datetime_fmt = '%Y-%m-%d %H:%M:%S.%f'
+
+        return MappingProxyType({
             'name': self.file_path.name,
             'dir': str(self.file_path.parent.absolute()),
             'exists': self.file_exists,
@@ -417,7 +428,7 @@ class Plist:
             'group': self.file_group,
             'size': self.file_size,
             'mode': self.file_mode,
-            'created': self.file_created.strftime('%Y-%m-%d %H:%M:%S.%f'),
-            'updated': self.file_updated.strftime('%Y-%m-%d %H:%M:%S.%f'),
-            'accessed': self.file_accessed.strftime('%Y-%m-%d %H:%M:%S.%f')
-        }])
+            'created': self.file_created.strftime(datetime_fmt),
+            'updated': self.file_updated.strftime(datetime_fmt),
+            'accessed': self.file_accessed.strftime(datetime_fmt)
+        })

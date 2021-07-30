@@ -13,8 +13,6 @@ from xml.etree import ElementTree as XmlElementTree
 
 import pandas as pd
 
-from pandas.util.testing import assert_frame_equal
-
 from pyplist.utils import (
     json_normalized_plist_dict,
     plist_dict_from_path,
@@ -206,8 +204,8 @@ class TestPlist(TestCase):
             expected_file_group = plist_file_path.group()
             self.assertEqual(received_plist.file_group, expected_file_group)
 
-            # Check plist file summary dataframe
-            expected_file_summary = pd.DataFrame([{
+            # Check plist file summary dict
+            expected_file_summary = MappingProxyType({
                 'name': plist_file_path.name,
                 'dir': os.path.dirname(plist_file_path),
                 'exists': True,
@@ -220,8 +218,8 @@ class TestPlist(TestCase):
                 'created': expected_file_created.strftime('%Y-%m-%d %H:%M:%S.%f'),
                 'updated': expected_file_updated.strftime('%Y-%m-%d %H:%M:%S.%f'),
                 'accessed': expected_file_accessed.strftime('%Y-%m-%d %H:%M:%S.%f')
-            }])
-            assert_frame_equal(received_plist.file_summary, expected_file_summary)
+            })
+            self.assertEqual(received_plist.file_summary, expected_file_summary)
 
     def test__repr__no_name_set__correct_repr_returned(self):
         plist_xml = """<?xml version="1.0" encoding="UTF-8"?>
