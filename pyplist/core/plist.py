@@ -14,7 +14,6 @@ from types import MappingProxyType
 from xml.etree import ElementTree as XmlElementTree
 
 import pandas as pd
-import psutil
 
 from ..utils import (
     blake2b_hash_iterable,
@@ -450,7 +449,7 @@ class ProgramPlist(Plist):
 
         Returns
         -------
-        ``pathlib.Path``, ``None``: 
+        ``pathlib.Path``, ``None``:
             The plist program path object, or null if none is available
         """
         try:
@@ -468,7 +467,7 @@ class ProgramPlist(Plist):
 
         Returns
         -------
-        ``str``, ``None`` : 
+        ``str``, ``None`` :
             The plist program name, or null if the program path is not null.
         """
         try:

@@ -180,13 +180,13 @@ def process_instances_by_name(process_name):
         Read-only dict of a ``psutil`` process instance dict
     """
     for proc in psutil.process_iter():
-       try:
-           pinfo = proc.as_dict()
+        try:
+            pinfo = proc.as_dict()
 
-           if process_name == pinfo['name']:
-               yield pinfo
-       except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess) :
-           pass
+            if process_name == pinfo['name']:
+                yield pinfo
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            pass
 
 
 def process_instances_by_exec_path(exec_path):
@@ -207,10 +207,10 @@ def process_instances_by_exec_path(exec_path):
         Read-only dict of a ``psutil`` process instance dict
     """
     for proc in psutil.process_iter():
-       try:
-           pinfo = proc.as_dict()
+        try:
+            pinfo = proc.as_dict()
 
-           if str(exec_path) == pinfo['exe']:
-               yield pinfo
-       except (psutil.NoSuchProcess, psutil.AccessDenied , psutil.ZombieProcess) :
-           pass
+            if str(exec_path) == pinfo['exe']:
+                yield pinfo
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            pass
