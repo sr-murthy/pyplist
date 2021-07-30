@@ -1,5 +1,6 @@
 __all__ = [
-    'Plist'
+    'Plist',
+    'ProcessPlist',
 ]
 
 
@@ -13,6 +14,7 @@ from types import MappingProxyType
 from xml.etree import ElementTree as XmlElementTree
 
 import pandas as pd
+import psutil
 
 from ..utils import (
     blake2b_hash_iterable,
@@ -32,7 +34,7 @@ class Plist:
     Implements ``__hash__`` to allow hashing of the plist properties, and
     ``__eq__`` to allow two plist objects to be compared for equality.
     """
-    def __init__(self, plist_input, name=None):
+    def __init__(self, plist_input):
         """
         Class initialiser - accepts either a plist file path string or a
         ``pathlib.Path`` object.
@@ -43,7 +45,6 @@ class Plist:
             raise plistlib.InvalidFileException(INVALID_PLIST_FILE_MSG)
         else:
             self._fp = Path(plist_input).absolute()
-            self._name = name
 
     @property
     def file_path(self):
@@ -61,25 +62,15 @@ class Plist:
     @property
     def name(self):
         """
-        Property - returns the plist name.
+        Property - returns the plist name. This is just the plist file name
+        stripped of the ``'.plist'`` extension.
 
         Returns
         -------
         ``str`` : the plist name
 
         """
-        return self._name
-
-    @name.setter
-    def name(self, _name):
-        """
-        Property setter - sets the plist name
-
-        Parameters
-        ----------
-        ``_name`` : The new plist name to set
-        """
-        self._name = _name
+        return self.file_path.name.rstrip('.plist')
 
     @property
     def xml(self):
@@ -133,11 +124,9 @@ class Plist:
         the same or similar file attributes, depending on any intermediate
         changes to the file.
         """
-        name_value = f'"{self.name}"' if self.name else "None"
-
         return (
             f'{self.__module__}.{self.__class__.__name__}('
-            f'"{self.file_path}", name={name_value}'
+            f'"{self.file_path}"'
             f')'
         )
 
@@ -393,7 +382,7 @@ class Plist:
         Property - returns a read-only dict summarising the key file
         properties:
         ::
-            * name
+            * file name
             * directory path
             * whether the file currently exists on the filesystem
             * the file type - ``'xml'``, or ``'binary'``
@@ -431,3 +420,13 @@ class Plist:
             'updated': self.file_updated.strftime(datetime_fmt),
             'accessed': self.file_accessed.strftime(datetime_fmt)
         })
+
+
+class ProcessPlist(Plist):
+
+    def __init__(self, plist_input):
+        """
+        Class initialiser - accepts either a plist file path string or a
+        ``pathlib.Path`` object.
+        """
+        super(self.__class__, self).__init__(plist_input)

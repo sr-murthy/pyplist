@@ -47,7 +47,7 @@ class TestPlist(TestCase):
         with self.assertRaises(plistlib.InvalidFileException):
             Plist(b'bytes')
 
-    def test__init__valid_xml_plist_file__correct_path_and_name_stored(self):
+    def test__init__valid_xml_plist_file__correct_path_stored(self):
         plist_xml = """<?xml version="1.0" encoding="UTF-8"?>
                     <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
                     <plist version="1.0">
@@ -72,11 +72,9 @@ class TestPlist(TestCase):
             plist_file.write(textwrap.dedent(plist_xml).encode('utf8'))
             plist_file.flush()
 
-            test_name = 'test__init__valid_plist_file__path_and_name_stored'
-            received_plist = Plist(plist_file.name, name=test_name)
+            received_plist = Plist(plist_file.name)
 
             self.assertEqual(received_plist.file_path, Path(plist_file.name).absolute())
-            self.assertEqual(received_plist.name, test_name)
 
     def test__init__valid_xml_plist_file__no_post_creation_modification__all_properties_correctly_set(self):
         plist_xml = """<?xml version="1.0" encoding="UTF-8"?>
@@ -109,12 +107,14 @@ class TestPlist(TestCase):
             plist_file.write(textwrap.dedent(plist_xml).encode('utf8'))
             plist_file.flush()
 
-            test_name = 'test__post__init__valid_plist_file__all_properties_correctly_set'
-            received_plist = Plist(plist_file.name, name=test_name)
+            received_plist = Plist(plist_file.name)
 
             # Check plist path
             plist_file_path = Path(plist_file.name).absolute()
             self.assertEqual(received_plist.file_path, plist_file_path)
+
+            # Check plist name
+            self.assertEqual(received_plist.name, plist_file_path.name.rstrip('.plist'))
 
             # Check plist file XMl source string property - we don't want to
             # compare this with the source XML string that was written to the
@@ -139,9 +139,6 @@ class TestPlist(TestCase):
 
             # Check plist XML version
             self.assertEqual(received_plist.plist_version, '1.0')
-
-            # Check plist name
-            self.assertEqual(received_plist.name, test_name)
 
             # Check plist properties dict
             self.assertEqual(received_plist.properties, expected_plist_dict)
@@ -221,7 +218,7 @@ class TestPlist(TestCase):
             })
             self.assertEqual(received_plist.file_summary, expected_file_summary)
 
-    def test__repr__no_name_set__correct_repr_returned(self):
+    def test__repr__correct_repr_returned(self):
         plist_xml = """<?xml version="1.0" encoding="UTF-8"?>
                     <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
                     <plist version="1.0">
@@ -238,76 +235,9 @@ class TestPlist(TestCase):
 
             received_plist = Plist(plist_file.name)
 
-            expected_plist_repr = f'pyplist.core.plist.Plist("{plist_file.name}", name=None)'
+            expected_plist_repr = f'pyplist.core.plist.Plist("{plist_file.name}")'
 
             self.assertEqual(received_plist.__repr__(), expected_plist_repr)
-
-    def test__repr__name_set__correct_repr_returned(self):
-        plist_xml = """<?xml version="1.0" encoding="UTF-8"?>
-                    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-                    <plist version="1.0">
-                    <dict>
-                        <key>a</key>
-                        <string>one</string>
-                    </dict>
-                    </plist>
-                    """
-
-        with NamedTemporaryFile('wb') as plist_file:
-            plist_file.write(textwrap.dedent(plist_xml).encode('utf8'))
-            plist_file.flush()
-
-            received_plist = Plist(plist_file.name, name='test_repr')
-
-            expected_plist_repr = f'pyplist.core.plist.Plist("{plist_file.name}", name="test_repr")'
-
-            self.assertEqual(received_plist.__repr__(), expected_plist_repr)
-
-    def test__property__name_setter__valid_plist_created_with_no_name__prop_call_sets_new_name_set_correctly(self):
-        plist_xml = """<?xml version="1.0" encoding="UTF-8"?>
-                    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-                    <plist version="1.0">
-                    <dict>
-                        <key>a</key>
-                        <string>one</string>
-                    </dict>
-                    </plist>
-                    """
-
-        with NamedTemporaryFile('wb') as plist_file:
-            plist_file.write(textwrap.dedent(plist_xml).encode('utf8'))
-            plist_file.flush()
-
-            received_plist = Plist(plist_file.name, name=None)
-
-            self.assertIsNone(received_plist.name)
-
-            received_plist.name = 'new_name'
-
-            self.assertEqual(received_plist.name, 'new_name')
-
-    def test__property___name_setter__valid_plist_created_with_a_name__prop_call_sets_new_name_set_correctly(self):
-        plist_xml = """<?xml version="1.0" encoding="UTF-8"?>
-                    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-                    <plist version="1.0">
-                    <dict>
-                        <key>a</key>
-                        <string>one</string>
-                    </dict>
-                    </plist>
-                    """
-
-        with NamedTemporaryFile('wb') as plist_file:
-            plist_file.write(textwrap.dedent(plist_xml).encode('utf8'))
-            plist_file.flush()
-
-            received_plist = Plist(plist_file.name, name='initial_name')
-
-            self.assertEqual(received_plist.name, 'initial_name')
-
-            received_plist.name = 'new_name'
-
-            self.assertEqual(received_plist.name, 'new_name')
 
     def test__property__xml__valid_xml_plist__prop_call_returns_correct_xml_str(self):
         plist_xml = """<?xml version="1.0" encoding="UTF-8"?>
