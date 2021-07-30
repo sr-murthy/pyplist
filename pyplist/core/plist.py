@@ -1,6 +1,6 @@
 __all__ = [
     'Plist',
-    'ProcessPlist',
+    'ProgramPlist',
 ]
 
 
@@ -21,6 +21,7 @@ from ..utils import (
     INVALID_PLIST_FILE_MSG,
     json_normalized_plist_dict,
     plist_dict_from_path,
+    process_instances_by_exec_path,
 )
 
 
@@ -38,6 +39,11 @@ class Plist:
         """
         Class initialiser - accepts either a plist file path string or a
         ``pathlib.Path`` object.
+
+        Parameters
+        ----------
+        ``str``, ``pathlib.Path``: plist path string or object
+
         """
         try:
             plist_dict_from_path(plist_input)
@@ -422,11 +428,74 @@ class Plist:
         })
 
 
-class ProcessPlist(Plist):
+class ProgramPlist(Plist):
 
     def __init__(self, plist_input):
         """
         Class initialiser - accepts either a plist file path string or a
         ``pathlib.Path`` object.
+
+        Parameters
+        ----------
+        ``str``, ``pathlib.Path`` :
+            plist path string or object
+
         """
         super(self.__class__, self).__init__(plist_input)
+
+    @property
+    def program_path(self):
+        """
+        Returns the plist program path object, or null if none is available.
+
+        Returns
+        -------
+        ``pathlib.Path``, ``None``: 
+            The plist program path object, or null if none is available
+        """
+        try:
+            return Path(self.properties['Program'])
+        except KeyError:
+            return Path(self.properties.get('ProgramArguments')[0])
+        except TypeError:
+            return
+
+    @property
+    def program_name(self):
+        """
+        Returns the plist program name, or null if the program path is not
+        null.
+
+        Returns
+        -------
+        ``str``, ``None`` : 
+            The plist program name, or null if the program path is not null.
+        """
+        try:
+            return self.program_path.name
+        except AttributeError:
+            return
+
+    @property
+    def process_instances(self):
+        """
+        Returns a read-only dict of the process instances of the plist program,
+        keyed by the process ID. If there are no active processes for the program
+        an empty dict is returned.
+
+        Returns
+        -------
+        ``types.MappingProxyType`` :
+            A read-only dict of the process instances of the plist program,
+            keyed by the process ID. If there are no active processes for the
+            program an empty dict is returned.
+        """
+        program_path = self.program_path
+
+        if not program_path:
+            raise AttributeError('plist program path not found')
+
+        return MappingProxyType({
+            proc_instance['pid']: proc_instance
+            for proc_instance in process_instances_by_exec_path(program_path)
+        })

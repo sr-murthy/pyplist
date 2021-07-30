@@ -1,6 +1,8 @@
 __all__ = [
     'json_normalized_plist_dict',
     'plist_dict_from_path',
+    'process_instances_by_exec_path',
+    'process_instances_by_name',
     'blake2b_hash_iterable',
     'INVALID_PLIST_FILE_MSG',
 ]
@@ -16,6 +18,7 @@ from pathlib import Path
 from xml.parsers.expat import ExpatError
 
 import pandas as pd
+import psutil
 
 
 INVALID_PLIST_FILE_MSG = textwrap.dedent(
@@ -156,3 +159,58 @@ def json_normalized_plist_dict(plist_dict):
     plist_df.columns = pd.Index(['value'])
 
     return plist_df['value'].to_dict()
+
+
+def process_instances_by_name(process_name):
+    """
+    Generates read-only versions of ``psutil`` process instance dicts for
+    processes sharing a common process name. The search is based on
+    an exact match for the process name.
+
+    Parameters
+    ----------
+
+    ``process_name`` : ``str``
+        The process name to look for - the search will be based on an exact
+        match, e.g. ``bash`` will be treated differently from ``Bash``
+
+    Yields
+    ------
+    ``types.MappingProxyType`` :
+        Read-only dict of a ``psutil`` process instance dict
+    """
+    for proc in psutil.process_iter():
+       try:
+           pinfo = proc.as_dict()
+
+           if process_name == pinfo['name']:
+               yield pinfo
+       except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess) :
+           pass
+
+
+def process_instances_by_exec_path(exec_path):
+    """
+    Generates read-only versions of ``psutil`` process instance dicts for
+    processes sharing a common executable path.
+
+    Parameters
+    ----------
+
+    ``exec_path`` : ``str``, ``pathlib.Path``
+        The process name to look for - the search will be based on an exact
+        match, e.g. ``bash`` will be treated differently from ``Bash``
+
+    Yields
+    ------
+    ``types.MappingProxyType`` :
+        Read-only dict of a ``psutil`` process instance dict
+    """
+    for proc in psutil.process_iter():
+       try:
+           pinfo = proc.as_dict()
+
+           if str(exec_path) == pinfo['exe']:
+               yield pinfo
+       except (psutil.NoSuchProcess, psutil.AccessDenied , psutil.ZombieProcess) :
+           pass
