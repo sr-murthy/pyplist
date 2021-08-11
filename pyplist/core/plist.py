@@ -432,7 +432,8 @@ class ProgramPlist(Plist):
     def __init__(self, plist_input):
         """
         Class initialiser - accepts either a plist file path string or a
-        ``pathlib.Path`` object.
+        ``pathlib.Path`` object. Represents plists for executables, e.g.
+        programs, processes, including daemons.
 
         Parameters
         ----------
@@ -445,12 +446,13 @@ class ProgramPlist(Plist):
     @property
     def program_path(self):
         """
-        Returns the plist program path object, or null if none is available.
+        Returns the plist program path object, if available via properties.
 
         Returns
         -------
         ``pathlib.Path``, ``None``:
-            The plist program path object, or null if none is available
+            The plist program path object, or null if unavailable via
+            properties.
         """
         try:
             return Path(self.properties['Program'])
@@ -462,13 +464,13 @@ class ProgramPlist(Plist):
     @property
     def program_name(self):
         """
-        Returns the plist program name, or null if the program path is not
-        null.
+        Returns the plist program name, if available via properties.
 
         Returns
         -------
         ``str``, ``None`` :
-            The plist program name, or null if the program path is not null.
+            The plist program name, or null if unavailable via
+            properties.
         """
         try:
             return self.program_path.name
@@ -498,3 +500,17 @@ class ProgramPlist(Plist):
             proc_instance['pid']: proc_instance
             for proc_instance in process_instances_by_exec_path(program_path)
         })
+
+    @property
+    def is_running(self):
+        """
+        Returns whether there is a running process associated with the plist
+        program.
+
+        Returns
+        -------
+        ``bool`` :
+            Whether there is a running process associated with the plist
+            program.
+        """
+        return len(self.process_instances) > 0
