@@ -9,6 +9,10 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from types import MappingProxyType
 from unittest import TestCase
+from unittest.mock import (
+    MagicMock,
+    patch,
+)
 from xml.etree import ElementTree as XmlElementTree
 
 import pandas as pd
@@ -17,7 +21,10 @@ from pyplist.utils import (
     json_normalized_plist_dict,
     plist_dict_from_path,
 )
-from pyplist.core.plist import Plist
+from pyplist.core.plist import (
+    Plist,
+    ProgramPlist,
+)
 
 
 class TestPlist(TestCase):
@@ -513,3 +520,431 @@ class TestPlist(TestCase):
                 received_plist2 = Plist(plist2_file.name)
 
                 self.assertFalse(received_plist1.__eq__(received_plist2))
+
+
+class TestProgramPlist(TestCase):
+
+    def test__init__invalid_plist_file__plistlib_invalid_file_exception_raised(self):
+        with self.assertRaises(plistlib.InvalidFileException):
+            ProgramPlist(None)
+
+        with self.assertRaises(plistlib.InvalidFileException):
+            ProgramPlist(True)
+
+        with self.assertRaises(plistlib.InvalidFileException):
+            ProgramPlist(0)
+
+        with self.assertRaises(plistlib.InvalidFileException):
+            ProgramPlist('/some/invalid/plist.plist')
+
+        with self.assertRaises(plistlib.InvalidFileException):
+            ProgramPlist(['x'])
+
+        with self.assertRaises(plistlib.InvalidFileException):
+            ProgramPlist(('x',))
+
+        with self.assertRaises(plistlib.InvalidFileException):
+            ProgramPlist(set('x'))
+
+        with self.assertRaises(plistlib.InvalidFileException):
+            ProgramPlist(b'bytes')
+
+    def test__init__valid_xml_plist_file__correct_path_stored(self):
+        plist_xml = """<?xml version="1.0" encoding="UTF-8"?>
+                    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+                    <plist version="1.0">
+                    <dict>
+                        <key>Label</key>
+                        <string>test</string>
+                        <key>Program</key>
+                        <string>/test/program/test.plist</string>
+                    </dict>
+                    </plist>
+                    """
+
+        with NamedTemporaryFile('wb') as plist_file:
+            plist_file.write(textwrap.dedent(plist_xml).encode('utf8'))
+            plist_file.flush()
+
+            received_plist = ProgramPlist(plist_file.name)
+
+            self.assertEqual(received_plist.file_path, Path(plist_file.name).absolute())
+
+    def test__init__valid_xml_plist_file__no_post_creation_modification__all_properties_correctly_set(self):
+        plist_xml = """<?xml version="1.0" encoding="UTF-8"?>
+                    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+                    <plist version="1.0">
+                    <dict>
+                        <key>Label</key>
+                        <string>test</string>
+                        <key>Program</key>
+                        <string>/test/program/test.plist</string>
+                        <key>ProgramArguments</key>
+                        <array>
+                            <string>/test/program/test.plist</string>
+                            <string>-t</string>
+                            <string>/test/program/test.conf</string>
+                        </array>
+                    </dict>
+                    </plist>
+                    """
+
+        expected_plist_dict = MappingProxyType({
+            'Label': 'test',
+            'Program': '/test/program/test.plist',
+            'ProgramArguments': ['/test/program/test.plist', '-t', '/test/program/test.conf']
+        })
+
+        with NamedTemporaryFile('wb') as plist_file:
+            plist_file.write(textwrap.dedent(plist_xml).encode('utf8'))
+            plist_file.flush()
+
+            received_plist = ProgramPlist(plist_file.name)
+
+            # Check plist path
+            plist_file_path = Path(plist_file.name).absolute()
+            self.assertEqual(received_plist.file_path, plist_file_path)
+
+            # Check plist name
+            self.assertEqual(received_plist.name, plist_file_path.name.rstrip('.plist'))
+
+            # Check plist program path
+            self.assertEqual(
+                received_plist.program_path,
+                Path('/test/program/test.plist')
+            )
+
+            # Check plist program name
+            self.assertEqual(received_plist.program_name, 'test.plist')
+
+            # Check plist file XMl source string property - we don't want to
+            # compare this with the source XML string that was written to the
+            # file, because of indentation and spacing differences in the two
+            # strings. Instead we check that the plist properties dict
+            # constructed from the XML string property is the same as the
+            # plist dict expected from the original plist object
+            received_plist_xml = received_plist.xml
+            with NamedTemporaryFile('wb') as plist_file2:
+                plist_file2.write(received_plist_xml.encode('utf8'))
+                plist_file2.flush()
+
+                plist_dict_from_received_plist_xml, _ = plist_dict_from_path(plist_file2.name)
+                plist_dict_from_received_plist_xml = json_normalized_plist_dict(
+                    plist_dict_from_received_plist_xml
+                )
+
+                self.assertEqual(
+                    MappingProxyType(plist_dict_from_received_plist_xml),
+                    expected_plist_dict
+                )
+
+            # Check plist XML version
+            self.assertEqual(received_plist.plist_version, '1.0')
+
+            # Check plist properties dict
+            self.assertEqual(received_plist.properties, expected_plist_dict)
+
+            # Check plist properties hash (using the BLAKE2b hash function)
+            expected_plist_str_series = pd.Series(
+                [
+                    'test',
+                    '/test/program/test.plist',
+                    "['/test/program/test.plist', '-t', '/test/program/test.conf']"
+                ],
+                index=['Label', 'Program', 'ProgramArguments']
+            )
+
+            expected_plist_bytes_series = expected_plist_str_series.apply(lambda val: val.encode('utf8'))
+            blake2b_hasher = blake2b()
+            for val in expected_plist_bytes_series:
+                blake2b_hasher.update(val)
+
+            expected_plist_hash = hash(blake2b_hasher.hexdigest())
+
+            self.assertEqual(received_plist.hash, expected_plist_hash)
+
+            # Check plist properties keys
+            self.assertEqual(received_plist.keys, tuple(['Label', 'Program', 'ProgramArguments']))
+
+            # Check plist properties values
+            self.assertEqual(
+                received_plist.values,
+                tuple(
+                    ['test', '/test/program/test.plist', ['/test/program/test.plist', '-t', '/test/program/test.conf']]
+                )
+            )
+
+            # Check plist exists
+            self.assertTrue(received_plist.file_exists)
+
+            # Check plist file type - the test plist here is XML
+            self.assertEqual(received_plist.file_type, 'xml')
+
+            # Check plist file mode
+            expected_file_mode = stat.filemode(os.stat(plist_file_path).st_mode)
+            self.assertEqual(received_plist.file_mode, expected_file_mode)
+
+            # Check plist file size
+            expected_file_size = os.path.getsize(plist_file_path)
+            self.assertEqual(received_plist.file_size, expected_file_size)
+
+            # Check plist creation time
+            expected_file_created = datetime.utcfromtimestamp(
+                os.path.getctime(plist_file_path))
+            self.assertEqual(received_plist.file_created, expected_file_created)
+
+            # Check plist updated time
+            expected_file_updated = datetime.utcfromtimestamp(
+                os.path.getmtime(plist_file_path))
+            self.assertEqual(received_plist.file_updated, expected_file_updated)
+
+            # Check plist accessed time
+            expected_file_accessed = datetime.utcfromtimestamp(
+                os.path.getatime(plist_file_path))
+            self.assertEqual(received_plist.file_accessed, expected_file_accessed)
+
+            # Check plist file owner login name
+            expected_file_owner = plist_file_path.owner()
+            self.assertEqual(received_plist.file_owner, expected_file_owner)
+
+            # Check plist file group name
+            expected_file_group = plist_file_path.group()
+            self.assertEqual(received_plist.file_group, expected_file_group)
+
+            # Check plist file summary dict
+            expected_file_summary = MappingProxyType({
+                'name': plist_file_path.name,
+                'dir': os.path.dirname(plist_file_path),
+                'exists': True,
+                'type': 'xml',
+                'plist_version': '1.0',
+                'user': expected_file_owner,
+                'group': expected_file_group,
+                'size': expected_file_size,
+                'mode': expected_file_mode,
+                'created': expected_file_created.strftime('%Y-%m-%d %H:%M:%S.%f'),
+                'updated': expected_file_updated.strftime('%Y-%m-%d %H:%M:%S.%f'),
+                'accessed': expected_file_accessed.strftime('%Y-%m-%d %H:%M:%S.%f')
+            })
+            self.assertEqual(received_plist.file_summary, expected_file_summary)
+
+    def test__property__program_path__valid_xml_plist__null_program_path__prop_call_returns_null(self):
+        plist_xml = """<?xml version="1.0" encoding="UTF-8"?>
+                    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+                    <plist version="1.0">
+                    <dict>
+                        <key>Label</key>
+                        <string>test</string>
+                    </dict>
+                    </plist>
+                    """
+
+        with NamedTemporaryFile('wb') as plist_file:
+            plist_file.write(textwrap.dedent(plist_xml).encode('utf8'))
+            plist_file.flush()
+
+            received_plist = ProgramPlist(plist_file.name)
+
+            self.assertIsNone(received_plist.program_path)
+
+    def test__property__program_path__valid_xml_plist__prop_call_returns_correct_program_path(self):
+        plist_xml = """<?xml version="1.0" encoding="UTF-8"?>
+                    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+                    <plist version="1.0">
+                    <dict>
+                        <key>Label</key>
+                        <string>test</string>
+                        <key>Program</key>
+                        <string>/test/program/test.plist</string>
+                    </dict>
+                    </plist>
+                    """
+
+        with NamedTemporaryFile('wb') as plist_file:
+            plist_file.write(textwrap.dedent(plist_xml).encode('utf8'))
+            plist_file.flush()
+
+            received_plist = ProgramPlist(plist_file.name)
+
+            self.assertEqual(received_plist.program_path, Path('/test/program/test.plist'))
+
+    def test__property__program_name__valid_xml_plist__null_program_path__prop_call_returns_null(self):
+        plist_xml = """<?xml version="1.0" encoding="UTF-8"?>
+                    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+                    <plist version="1.0">
+                    <dict>
+                        <key>Label</key>
+                        <string>test</string>
+                    </dict>
+                    </plist>
+                    """
+
+        with NamedTemporaryFile('wb') as plist_file:
+            plist_file.write(textwrap.dedent(plist_xml).encode('utf8'))
+            plist_file.flush()
+
+            received_plist = ProgramPlist(plist_file.name)
+
+            self.assertIsNone(received_plist.program_name)
+
+    def test__property__program_name__valid_xml_plist__prop_call_returns_correct_program_name(self):
+        plist_xml = """<?xml version="1.0" encoding="UTF-8"?>
+                    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+                    <plist version="1.0">
+                    <dict>
+                        <key>Label</key>
+                        <string>test</string>
+                        <key>Program</key>
+                        <string>/test/program/test.plist</string>
+                    </dict>
+                    </plist>
+                    """
+
+        with NamedTemporaryFile('wb') as plist_file:
+            plist_file.write(textwrap.dedent(plist_xml).encode('utf8'))
+            plist_file.flush()
+
+            received_plist = ProgramPlist(plist_file.name)
+
+            self.assertEqual(received_plist.program_name, 'test.plist')
+
+    def test__property__process_instances__valid_xml_plist__null_program_path__prop_call_returns_null(self):
+        plist_xml = """<?xml version="1.0" encoding="UTF-8"?>
+                    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+                    <plist version="1.0">
+                    <dict>
+                        <key>Label</key>
+                        <string>test</string>
+                    </dict>
+                    </plist>
+                    """
+
+        with NamedTemporaryFile('wb') as plist_file:
+            plist_file.write(textwrap.dedent(plist_xml).encode('utf8'))
+            plist_file.flush()
+
+            received_plist = ProgramPlist(plist_file.name)
+
+            self.assertIsNone(received_plist.program_path)
+
+    def test__property__process_instances__valid_xml_plist__no_running_processes__prop_call_returns_empty_dict(self):
+        plist_xml = """<?xml version="1.0" encoding="UTF-8"?>
+                    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+                    <plist version="1.0">
+                    <dict>
+                        <key>Label</key>
+                        <string>test</string>
+                        <key>Program</key>
+                        <string>/test/program/test.plist</string>
+                    </dict>
+                    </plist>
+                    """
+
+        with NamedTemporaryFile('wb') as plist_file:
+            plist_file.write(textwrap.dedent(plist_xml).encode('utf8'))
+            plist_file.flush()
+
+            with patch('pyplist.core.plist.process_instances_by_exec_path', MagicMock()) as mock_process_instances:
+                mock_process_instances.iter.return_value = iter([])
+
+                received_plist = ProgramPlist(plist_file.name)
+
+                self.assertEqual(received_plist.process_instances, MappingProxyType({}))
+
+    def test__property__process_instances__valid_xml_plist__one_running_process__prop_call_returns_correct_process_dict(self):
+        plist_xml = """<?xml version="1.0" encoding="UTF-8"?>
+                    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+                    <plist version="1.0">
+                    <dict>
+                        <key>Label</key>
+                        <string>test</string>
+                        <key>Program</key>
+                        <string>/test/program/test.plist</string>
+                    </dict>
+                    </plist>
+                    """
+
+        with NamedTemporaryFile('wb') as plist_file:
+            plist_file.write(textwrap.dedent(plist_xml).encode('utf8'))
+            plist_file.flush()
+
+            mocked_process_dict = {'name': 'test_proc_name', 'pid': 100, 'exe': '/test/program/test.plist'}
+            with patch('pyplist.core.plist.process_instances_by_exec_path', MagicMock()) as mock_process_instances:
+                mock_process_instances.return_value = iter([mocked_process_dict])
+
+                received_plist = ProgramPlist(plist_file.name)
+
+                self.assertEqual(
+                    received_plist.process_instances,
+                    MappingProxyType(
+                        {100: {'name': 'test_proc_name', 'pid': 100, 'exe': '/test/program/test.plist'}}
+                    )
+                )
+
+    def test__property__is_running__valid_xml_plist__null_program_path__prop_call_returns_null(self):
+        plist_xml = """<?xml version="1.0" encoding="UTF-8"?>
+                    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+                    <plist version="1.0">
+                    <dict>
+                        <key>Label</key>
+                        <string>test</string>
+                    </dict>
+                    </plist>
+                    """
+
+        with NamedTemporaryFile('wb') as plist_file:
+            plist_file.write(textwrap.dedent(plist_xml).encode('utf8'))
+            plist_file.flush()
+
+            received_plist = ProgramPlist(plist_file.name)
+
+            self.assertIsNone(received_plist.is_running)
+
+    def test__property__is_running__valid_xml_plist__no_running_processes__prop_call_returns_false(self):
+        plist_xml = """<?xml version="1.0" encoding="UTF-8"?>
+                    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+                    <plist version="1.0">
+                    <dict>
+                        <key>Label</key>
+                        <string>test</string>
+                        <key>Program</key>
+                        <string>/test/program/test.plist</string>
+                    </dict>
+                    </plist>
+                    """
+
+        with NamedTemporaryFile('wb') as plist_file:
+            plist_file.write(textwrap.dedent(plist_xml).encode('utf8'))
+            plist_file.flush()
+
+            with patch('pyplist.core.plist.process_instances_by_exec_path', MagicMock()) as mock_process_instances:
+                mock_process_instances.iter.return_value = iter([])
+
+                received_plist = ProgramPlist(plist_file.name)
+
+                self.assertFalse(received_plist.is_running)
+
+    def test__property__is_running__valid_xml_plist__one_running_process__prop_call_returns_true(self):
+        plist_xml = """<?xml version="1.0" encoding="UTF-8"?>
+                    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+                    <plist version="1.0">
+                    <dict>
+                        <key>Label</key>
+                        <string>test</string>
+                        <key>Program</key>
+                        <string>/test/program/test.plist</string>
+                    </dict>
+                    </plist>
+                    """
+
+        with NamedTemporaryFile('wb') as plist_file:
+            plist_file.write(textwrap.dedent(plist_xml).encode('utf8'))
+            plist_file.flush()
+
+            mocked_process_dict = {'name': 'test_proc_name', 'pid': 100, 'exe': '/test/program/test.plist'}
+            with patch('pyplist.core.plist.process_instances_by_exec_path', MagicMock()) as mock_process_instances:
+                mock_process_instances.return_value = iter([mocked_process_dict])
+
+                received_plist = ProgramPlist(plist_file.name)
+
+                self.assertTrue(received_plist.is_running)

@@ -457,9 +457,10 @@ class ProgramPlist(Plist):
         try:
             return Path(self.properties['Program'])
         except KeyError:
-            return Path(self.properties.get('ProgramArguments')[0])
-        except TypeError:
-            return
+            try:
+                return Path(self.properties.get('ProgramArguments')[0])
+            except TypeError:
+                return
 
     @property
     def program_name(self):
@@ -494,7 +495,7 @@ class ProgramPlist(Plist):
         program_path = self.program_path
 
         if not program_path:
-            raise AttributeError('plist program path not found')
+            return
 
         return MappingProxyType({
             proc_instance['pid']: proc_instance
@@ -505,12 +506,19 @@ class ProgramPlist(Plist):
     def is_running(self):
         """
         Returns whether there is a running process associated with the plist
-        program.
+        program. If the program path is undefined or invalid this will return
+        null, as the call on the ``process_instances`` property will return
+        null in that case.
 
         Returns
         -------
-        ``bool`` :
+        ``bool``, ``None`` :
             Whether there is a running process associated with the plist
-            program.
+            program. If the program path is undefined or invalid this will
+            return null, as the call on the ``process_instances`` property
+            will return null in that case.
         """
-        return len(self.process_instances) > 0
+        try:
+            return len(self.process_instances) > 0
+        except TypeError:
+            return
