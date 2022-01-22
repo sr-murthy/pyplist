@@ -198,8 +198,11 @@ def process_instances_by_exec_path(exec_path):
     ----------
 
     ``exec_path`` : ``str``, ``pathlib.Path``
-        The process name to look for - the search will be based on an exact
-        match, e.g. ``bash`` will be treated differently from ``Bash``
+        The process executable path to look for - can be a string or a
+        ``pathlib.Path`` object; the search will be based on an exact match for
+        the suffix denoting the executable name, e.g. the executable name for
+        ``'/sbin/launchd'`` will be the substring ``'launchd'``, and the search
+        will be based on a an exact match for ``'launchd'``
 
     Yields
     ------
