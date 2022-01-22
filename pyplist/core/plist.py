@@ -270,7 +270,7 @@ class Plist:
 
         Raises
         ------
-        ``FileNotFoundError` if the file no longer exists
+        ``FileNotFoundError` if the file no longer exists.
         """
         return stat.filemode(os.stat(self.file_path).st_mode)
 
@@ -285,7 +285,7 @@ class Plist:
 
         Raises
         ------
-        ``FileNotFoundError` if the file no longer exists
+        ``FileNotFoundError` if the file no longer exists.
         """
         return os.path.getsize(self.file_path)
 
@@ -302,7 +302,7 @@ class Plist:
 
         Raises
         ------
-        ``FileNotFoundError` if the file no longer exists
+        ``FileNotFoundError` if the file no longer exists.
         """
         created_epoch_time = os.path.getctime(self.file_path)
 
@@ -318,12 +318,11 @@ class Plist:
         Returns
         -------
         ``datetime.datetime`` object of the UTC time the file was last updated,
-        if
-        it exists
+        if it exists.
 
         Raises
         ------
-        ``FileNotFoundError` if the file no longer exists
+        ``FileNotFoundError` if the file no longer exists.
         """
         updated_epoch_time = os.path.getmtime(self.file_path)
 
@@ -339,11 +338,11 @@ class Plist:
         Returns
         -------
         ``datetime.datetime`` object of the UTC time the file was last
-        accessed, if it exists
+        accessed, if it exists.
 
         Raises
         ------
-        ``FileNotFoundError` if the file no longer exists
+        ``FileNotFoundError` if the file no longer exists.
         """
         accessed_epoch_time = os.path.getatime(self.file_path)
 
@@ -361,7 +360,7 @@ class Plist:
 
         Raises
         ------
-        ``FileNotFoundError` if the file no longer exists
+        ``FileNotFoundError` if the file no longer exists.
         """
         return self.file_path.owner()
 
@@ -377,7 +376,7 @@ class Plist:
 
         Raises
         ------
-        ``FileNotFoundError` if the file no longer exists
+        ``FileNotFoundError` if the file no longer exists.
         """
         return self.file_path.group()
 
@@ -407,7 +406,7 @@ class Plist:
 
         Raises
         ------
-        ``FileNotFoundError` if the file no longer exists
+        ``FileNotFoundError` if the file no longer exists.
         """
         datetime_fmt = '%Y-%m-%d %H:%M:%S.%f'
 
@@ -438,7 +437,7 @@ class ProgramPlist(Plist):
         Parameters
         ----------
         ``str``, ``pathlib.Path`` :
-            plist path string or object
+            plist path string or object.
 
         """
         super(self.__class__, self).__init__(plist_input)
@@ -482,15 +481,15 @@ class ProgramPlist(Plist):
     def process_instances(self):
         """
         Returns a read-only dict of the process instances of the plist program,
-        keyed by the process ID. If there are no active processes for the program
-        an empty dict is returned.
+        keyed by the process ID, if the program path exists. Otherwise returns
+        null.
 
         Returns
         -------
-        ``types.MappingProxyType`` :
+        ``None``, ``types.MappingProxyType`` :
             A read-only dict of the process instances of the plist program,
-            keyed by the process ID. If there are no active processes for the
-            program an empty dict is returned.
+            keyed by the process ID, if the program path exists. Otherwise
+            returns null.
         """
         program_path = self.program_path
 
@@ -522,3 +521,48 @@ class ProgramPlist(Plist):
             return len(self.process_instances) > 0
         except TypeError:
             return
+
+
+class DaemonPlist(ProgramPlist):
+
+    def __init__(self, plist_input):
+        """
+        Class initialiser - accepts either a plist file path string or a
+        ``pathlib.Path`` object. Represents plists for daemons.
+
+        Parameters
+        ----------
+        ``str``, ``pathlib.Path`` :
+            plist path string or object.
+
+        """
+        super(self.__class__, self).__init__(plist_input)
+
+    @property
+    def label(self):
+        """
+        Returns the daemon label, if this is defined.
+
+        Returns
+        -------
+        ``str``, ``None`` :
+            Returns the daemon label, if it is defined.
+        """
+        return self.properties.get('Label')
+
+    @property
+    def program_arguments(self):
+        """
+        Returns a tuple of the daemon launch arguments, if this is defined.
+
+        Returns
+        -------
+        ``tuple``, ``None`` :
+            Returns a tuple of the daemon launch arguments, if it is defined.
+        """
+        prog_args = self.properties.get('ProgramArguments')
+
+        if prog_args:
+            return prog_args
+
+        return
